@@ -10,7 +10,6 @@ type GameSidePanelProps = {
   isRefreshing: boolean;
   isShieldActive: boolean;
   activeEffects: string[];
-  goals: Array<{ label: string; detail: string; done: boolean }>;
   submittedWords: SubmittedWord[];
   onSubmitWord: () => void;
   onBackspace: () => void;
@@ -26,7 +25,6 @@ type GameSidePanelProps = {
     restartRound: string;
     playAgain: string;
     acceptedWords: string;
-    goals: string;
     noneYet: string;
     effects: string;
     noEffects: string;
@@ -43,7 +41,6 @@ export function GameSidePanel({
   isRefreshing,
   isShieldActive,
   activeEffects,
-  goals,
   submittedWords,
   onSubmitWord,
   onBackspace,
@@ -88,18 +85,6 @@ export function GameSidePanel({
 
       <section className="effects effectsInPanel">
         {labels.effects}: {activeEffects.length > 0 ? activeEffects.join(" · ") : labels.noEffects}
-      </section>
-
-      <section className="submitted">
-        <h2>{labels.goals}</h2>
-        <ul>
-          {goals.map((goal, index) => (
-            <li key={`goal-${index}`}>
-              <span>{goal.done ? "✓" : "○"} {goal.label}</span>
-              <strong>{goal.detail}</strong>
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="submitted">

@@ -1,9 +1,9 @@
 import type { PowerUpKind } from "../game/types";
+import { PowerUpIcon } from "./PowerUpIcon";
 
 type HelpModalProps = {
   isOpen: boolean;
   powerUpOrder: PowerUpKind[];
-  powerUpLabelByKind: Record<PowerUpKind, string>;
   powerUpHelpByKind: Record<PowerUpKind, string>;
   onClose: () => void;
   labels: {
@@ -21,7 +21,6 @@ type HelpModalProps = {
 export function HelpModal({
   isOpen,
   powerUpOrder,
-  powerUpLabelByKind,
   powerUpHelpByKind,
   onClose,
   labels
@@ -51,7 +50,9 @@ export function HelpModal({
         <ul className="helpPowerUps">
           {powerUpOrder.map((kind) => (
             <li key={kind}>
-              <strong>{powerUpLabelByKind[kind]}</strong>
+              <strong className={`helpPowerUpGlyph powerup-${kind}`}>
+                <PowerUpIcon kind={kind} />
+              </strong>
               <span>{powerUpHelpByKind[kind]}</span>
             </li>
           ))}

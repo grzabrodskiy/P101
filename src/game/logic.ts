@@ -1,6 +1,6 @@
 import {
-  FALLBACK_WORDS,
   FIELD_SIZE,
+  POWERUP_SPAWN_WEIGHTS,
   POWERUP_SIZE,
   POWERUP_TYPES,
   TILE_SIZE,
@@ -237,7 +237,16 @@ export function makeTile(id: number, language: LanguageCode, speedMultiplier = 1
 }
 
 export function randomPowerUpKind(): PowerUpKind {
-  return POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+  const totalWeight = POWERUP_TYPES.reduce(
+    (sum, kind) => sum + (POWERUP_SPAWN_WEIGHTS[kind] ?? 1),
+    0
+  );
+  let pick = Math.random() * totalWeight;
+  for (const kind of POWERUP_TYPES) {
+    pick -= POWERUP_SPAWN_WEIGHTS[kind] ?? 1;
+    if (pick <= 0) return kind;
+  }
+  return "wild";
 }
 
 export function makePowerUp(id: number, kind?: PowerUpKind, speedMultiplier = 1): PowerUp {
@@ -246,14 +255,6 @@ export function makePowerUp(id: number, kind?: PowerUpKind, speedMultiplier = 1)
     kind: kind ?? randomPowerUpKind()
   };
 }
-
-const FALLBACK_WORDS_BY_LANGUAGE: Record<LanguageCode, Set<string>> = {
-  en: FALLBACK_WORDS,
-  de: new Set(["haus", "hund", "baum", "spiel", "wort", "straße", "schule", "zeit"]),
-  fr: new Set(["maison", "chien", "arbre", "jeu", "mot", "route", "temps", "ville"]),
-  it: new Set(["casa", "cane", "albero", "gioco", "parola", "strada", "tempo", "mondo"]),
-  ru: new Set(["дом", "мир", "слово", "игра", "время", "город", "книга", "дорога"])
-};
 
 const WORD_VALIDATION_CACHE = new Map<string, boolean>();
 
@@ -279,20 +280,14 @@ export async function isRealWord(word: string, language: LanguageCode): Promise<
   const cached = WORD_VALIDATION_CACHE.get(cacheKey);
   if (cached !== undefined) return cached;
 
-  if ((FALLBACK_WORDS_BY_LANGUAGE[language] ?? FALLBACK_WORDS).has(normalized)) {
-    WORD_VALIDATION_CACHE.set(cacheKey, true);
-    return true;
-  }
-
   const locale = dictionaryLocale(language);
   try {
-    const primary = await queryDictionary(normalized, locale);
-    WORD_VALIDATION_CACHE.set(cacheKey, primary);
-    return primary;
+    const isValid = await queryDictionary(normalized, locale);
+    WORD_VALIDATION_CACHE.set(cacheKey, isValid);
+    return isValid;
   } catch {
-    const fallback = (FALLBACK_WORDS_BY_LANGUAGE[language] ?? FALLBACK_WORDS).has(normalized);
-    WORD_VALIDATION_CACHE.set(cacheKey, fallback);
-    return fallback;
+    WORD_VALIDATION_CACHE.set(cacheKey, false);
+    return false;
   }
 }
 

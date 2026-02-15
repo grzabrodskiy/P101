@@ -27,11 +27,14 @@ type Translations = {
   playAgain: string;
   acceptedWords: string;
   goals: string;
+  required: string;
+  optional: string;
   noneYet: string;
   trayPlaceholder: string;
   wordPoints: string;
   totalScore: string;
   round: string;
+  combo: string;
   timeLeft: string;
   flyingLetters: string;
   target: string;
@@ -47,6 +50,7 @@ type Translations = {
   language: string;
   languageSetupTitle: string;
   roundDuration: string;
+  rounds: string;
   roundDurationOptionLabel: (seconds: 60 | 90 | 120) => string;
   speed: string;
   bounces: string;
@@ -80,6 +84,10 @@ type Translations = {
   closeHelp: string;
   pausedStatus: string;
   statusChecking: (word: string) => string;
+  doubleWordSuffix: string;
+  comboSuffix: (multiplier: number) => string;
+  statusRoundBonus: (completed: number, total: number, bonus: number) => string;
+  statusScoreRequired: (points: number) => string;
   statusGreatWord: (word: string, points: number, suffix: string) => string;
   goalScore: (points: number) => string;
   goalLongWords: (count: number, minLength: number) => string;
@@ -90,7 +98,7 @@ type Translations = {
 
 export const UI_TEXT: Record<LanguageCode, Translations> = {
   en: {
-    title: "Scrabble Bounce",
+    title: "Word Bouncer",
     initialStatus: "Tap flying letters to build a word.",
     timeUpStatus: "Time is up. Submit again after restart.",
     bombRefreshComplete: "Bomb refresh complete.",
@@ -104,12 +112,15 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Restart Round",
     playAgain: "Play Again",
     acceptedWords: "Accepted Words",
-    goals: "Round Goals",
+    goals: "Goals",
+    required: "Required",
+    optional: "Optional",
     noneYet: "None yet",
     trayPlaceholder: "Tap letters to build a word",
     wordPoints: "Word Points",
     totalScore: "Total Score",
     round: "Round",
+    combo: "Combo",
     timeLeft: "Time Left",
     flyingLetters: "Flying Letters",
     target: "Target",
@@ -125,6 +136,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     language: "Language",
     languageSetupTitle: "Choose language for this round",
     roundDuration: "Round Duration",
+    rounds: "Rounds",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Quick", 90: "Standard", 120: "Long" })[seconds],
     speed: "Speed",
@@ -159,6 +171,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Close",
     pausedStatus: "Game paused.",
     statusChecking: (word) => `Checking "${word}"...`,
+    doubleWordSuffix: " with Double Word",
+    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
+    statusRoundBonus: (completed, total, bonus) =>
+      `Goals completed ${completed}/${total}. Bonus +${bonus}.`,
+    statusScoreRequired: (points) => `Reach ${points} score this round to advance.`,
     statusGreatWord: (word, points, suffix) => `Great word: ${word} (+${points})${suffix}`,
     goalScore: (points) => `Score at least ${points}`,
     goalLongWords: (count, minLength) => `Make ${count} words of ${minLength}+ letters`,
@@ -193,7 +210,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   de: {
-    title: "Scrabble Bounce",
+    title: "Word Bouncer",
     initialStatus: "Tippe auf fliegende Buchstaben, um ein Wort zu bilden.",
     timeUpStatus: "Zeit ist abgelaufen. Nach Neustart erneut einreichen.",
     bombRefreshComplete: "Bomben-Aktualisierung abgeschlossen.",
@@ -207,12 +224,15 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Runde neu starten",
     playAgain: "Nochmal spielen",
     acceptedWords: "Akzeptierte Wörter",
-    goals: "Rundenziele",
+    goals: "Ziele",
+    required: "Pflicht",
+    optional: "Optional",
     noneYet: "Noch keine",
     trayPlaceholder: "Tippe Buchstaben, um ein Wort zu bilden",
     wordPoints: "Wortpunkte",
     totalScore: "Gesamtpunkte",
     round: "Runde",
+    combo: "Combo",
     timeLeft: "Restzeit",
     flyingLetters: "Fliegende Buchstaben",
     target: "Ziel",
@@ -228,6 +248,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     language: "Sprache",
     languageSetupTitle: "Sprache fur diese Runde auswahlen",
     roundDuration: "Rundendauer",
+    rounds: "Runden",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Kurz", 90: "Standard", 120: "Lang" })[seconds],
     speed: "Tempo",
@@ -262,6 +283,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Schließen",
     pausedStatus: "Spiel pausiert.",
     statusChecking: (word) => `Prüfe "${word}"...`,
+    doubleWordSuffix: " mit Doppelwort",
+    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
+    statusRoundBonus: (completed, total, bonus) =>
+      `Ziele erreicht ${completed}/${total}. Bonus +${bonus}.`,
+    statusScoreRequired: (points) => `Erreiche ${points} Punkte in dieser Runde zum Weiterkommen.`,
     statusGreatWord: (word, points, suffix) => `Starkes Wort: ${word} (+${points})${suffix}`,
     goalScore: (points) => `Mindestens ${points} Punkte`,
     goalLongWords: (count, minLength) => `${count} Wörter mit ${minLength}+ Buchstaben`,
@@ -296,7 +322,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   fr: {
-    title: "Scrabble Bounce",
+    title: "Word Bouncer",
     initialStatus: "Touchez les lettres volantes pour former un mot.",
     timeUpStatus: "Le temps est écoulé. Recommencez puis soumettez.",
     bombRefreshComplete: "Rafraîchissement de la bombe terminé.",
@@ -310,12 +336,15 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Relancer",
     playAgain: "Rejouer",
     acceptedWords: "Mots acceptés",
-    goals: "Objectifs du round",
+    goals: "Objectifs",
+    required: "Requis",
+    optional: "Optionnel",
     noneYet: "Aucun",
     trayPlaceholder: "Touchez des lettres pour former un mot",
     wordPoints: "Points du mot",
     totalScore: "Score total",
     round: "Manche",
+    combo: "Combo",
     timeLeft: "Temps restant",
     flyingLetters: "Lettres volantes",
     target: "Cible",
@@ -331,6 +360,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     language: "Langue",
     languageSetupTitle: "Choisissez la langue pour ce tour",
     roundDuration: "Duree du tour",
+    rounds: "Manches",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Rapide", 90: "Standard", 120: "Long" })[seconds],
     speed: "Vitesse",
@@ -365,6 +395,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Fermer",
     pausedStatus: "Jeu en pause.",
     statusChecking: (word) => `Vérification de "${word}"...`,
+    doubleWordSuffix: " avec Mot double",
+    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
+    statusRoundBonus: (completed, total, bonus) =>
+      `Objectifs atteints ${completed}/${total}. Bonus +${bonus}.`,
+    statusScoreRequired: (points) => `Atteins ${points} points ce round pour avancer.`,
     statusGreatWord: (word, points, suffix) => `Excellent mot : ${word} (+${points})${suffix}`,
     goalScore: (points) => `Atteindre ${points} points`,
     goalLongWords: (count, minLength) => `Faire ${count} mots de ${minLength}+ lettres`,
@@ -399,7 +434,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   it: {
-    title: "Scrabble Bounce",
+    title: "Word Bouncer",
     initialStatus: "Tocca le lettere volanti per formare una parola.",
     timeUpStatus: "Tempo scaduto. Riavvia e invia di nuovo.",
     bombRefreshComplete: "Aggiornamento bomba completato.",
@@ -413,12 +448,15 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Ricomincia",
     playAgain: "Gioca ancora",
     acceptedWords: "Parole accettate",
-    goals: "Obiettivi round",
+    goals: "Obiettivi",
+    required: "Richiesto",
+    optional: "Opzionale",
     noneYet: "Nessuna",
     trayPlaceholder: "Tocca le lettere per formare una parola",
     wordPoints: "Punti parola",
     totalScore: "Punteggio totale",
     round: "Round",
+    combo: "Combo",
     timeLeft: "Tempo rimasto",
     flyingLetters: "Lettere volanti",
     target: "Obiettivo",
@@ -434,6 +472,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     language: "Lingua",
     languageSetupTitle: "Scegli la lingua per questo round",
     roundDuration: "Durata round",
+    rounds: "Round",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Veloce", 90: "Standard", 120: "Lungo" })[seconds],
     speed: "Velocita",
@@ -468,6 +507,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Chiudi",
     pausedStatus: "Gioco in pausa.",
     statusChecking: (word) => `Controllo "${word}"...`,
+    doubleWordSuffix: " con Parola doppia",
+    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
+    statusRoundBonus: (completed, total, bonus) =>
+      `Obiettivi completati ${completed}/${total}. Bonus +${bonus}.`,
+    statusScoreRequired: (points) => `Raggiungi ${points} punti in questo round per avanzare.`,
     statusGreatWord: (word, points, suffix) => `Ottima parola: ${word} (+${points})${suffix}`,
     goalScore: (points) => `Raggiungi ${points} punti`,
     goalLongWords: (count, minLength) => `Fai ${count} parole da ${minLength}+ lettere`,
@@ -502,7 +546,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   ru: {
-    title: "Scrabble Bounce",
+    title: "Word Bouncer",
     initialStatus: "Нажимайте на летающие буквы, чтобы собрать слово.",
     timeUpStatus: "Время вышло. Перезапустите и отправьте снова.",
     bombRefreshComplete: "Обновление после бомбы завершено.",
@@ -516,12 +560,15 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Начать заново",
     playAgain: "Играть снова",
     acceptedWords: "Принятые слова",
-    goals: "Цели раунда",
+    goals: "Цели",
+    required: "Обязательно",
+    optional: "Опционально",
     noneYet: "Пока нет",
     trayPlaceholder: "Нажимайте буквы, чтобы собрать слово",
     wordPoints: "Очки слова",
     totalScore: "Общий счёт",
     round: "Раунд",
+    combo: "Комбо",
     timeLeft: "Осталось",
     flyingLetters: "Летающие буквы",
     target: "Цель",
@@ -537,6 +584,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     language: "Язык",
     languageSetupTitle: "Выберите язык для раунда",
     roundDuration: "Длительность раунда",
+    rounds: "Раунды",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Быстрый", 90: "Стандарт", 120: "Длинный" })[seconds],
     speed: "Скорость",
@@ -571,6 +619,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Закрыть",
     pausedStatus: "Игра на паузе.",
     statusChecking: (word) => `Проверка "${word}"...`,
+    doubleWordSuffix: " с Двойным словом",
+    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
+    statusRoundBonus: (completed, total, bonus) =>
+      `Цели выполнены ${completed}/${total}. Бонус +${bonus}.`,
+    statusScoreRequired: (points) => `Наберите ${points} очков в раунде, чтобы перейти дальше.`,
     statusGreatWord: (word, points, suffix) => `Отличное слово: ${word} (+${points})${suffix}`,
     goalScore: (points) => `Набрать минимум ${points} очков`,
     goalLongWords: (count, minLength) => `Собрать ${count} слов по ${minLength}+ букв`,

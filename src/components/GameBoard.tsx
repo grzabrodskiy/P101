@@ -9,22 +9,25 @@ import {
 
 import {
   BASE_TILE_COUNT,
+  COMBO_BONUS_STEP,
+  COMBO_MAX_MULTIPLIER,
+  COMBO_WINDOW_SECONDS,
   EXPLOSION_MS,
   MAX_EFFECT_SECONDS,
   POWERUP_SIZE,
   POWERUP_META,
   POWERUP_TYPES,
   REFRESH_SPAWN_MS,
+  ROUND_PACE_STEP,
   TILE_SIZE,
   type BaseTileCount,
-  type DifficultyPresetKey,
   type MaxBounces,
   type RoundDurationSeconds,
   type SpeedMultiplier
 } from "../game/constants";
-import { dictionaryLocale, LANGUAGE_OPTIONS, type LanguageCode, UI_TEXT } from "../game/i18n";
+import { LANGUAGE_OPTIONS, type LanguageCode, UI_TEXT } from "../game/i18n";
 import { isRealWord, makePowerUp, makeTile, updateMovingEntity, wildcardCandidates } from "../game/logic";
-import type { Letter, PowerUp, PowerUpKind, SubmittedWord, Tile, TrayTile } from "../game/types";
+import type { Letter, PowerUp, SubmittedWord, Tile, TrayTile } from "../game/types";
 import { GameField } from "./GameField";
 import { GameHud } from "./GameHud";
 import { GameMenu } from "./GameMenu";
@@ -36,7 +39,15 @@ function stopEvent(event: SyntheticEvent) {
   event.stopPropagation();
 }
 
-const MATCH_ROUNDS = 3;
+type RoundGoalConfig = {
+  score: number;
+};
+
+function rollGoalConfig(round: number): RoundGoalConfig {
+  return {
+    score: 45 + (round - 1) * 15
+  };
+}
 
 type GameBoardProps = {
   language: LanguageCode;
@@ -45,7 +56,6 @@ type GameBoardProps = {
   speedMultiplier: SpeedMultiplier;
   maxBounces: MaxBounces;
   powerUpRespawnMs: number;
-  difficultyPreset: DifficultyPresetKey | "custom";
   onOpenOptions: () => void;
 };
 
@@ -56,7 +66,6 @@ export function GameBoard({
   speedMultiplier,
   maxBounces,
   powerUpRespawnMs,
-  difficultyPreset,
   onOpenOptions
 }: GameBoardProps) {
   const t = UI_TEXT[language];
@@ -64,6 +73,7 @@ export function GameBoard({
   const idRef = useRef(1);
   const frameRef = useRef<number | null>(null);
   const tickRef = useRef(0);
+  const feedbackIdRef = useRef(1);
   const powerUpRespawnAtRef = useRef(0);
   const pointerRef = useRef<{ x: number; y: number } | null>(null);
   const validateSeqRef = useRef(0);
@@ -81,16 +91,21 @@ export function GameBoard({
   const [wordValidation, setWordValidation] = useState<"too-short" | "checking" | "valid" | "invalid">(
     "too-short"
   );
-  const [timeLeft, setTimeLeft] = useState(roundSeconds);
+  const [timeLeft, setTimeLeft] = useState<number>(roundSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isBetweenRounds, setIsBetweenRounds] = useState(false);
-  const [isMatchComplete, setIsMatchComplete] = useState(false);
-  const [roundLongWords, setRoundLongWords] = useState(0);
-  const [roundPowerUps, setRoundPowerUps] = useState(0);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [canAdvanceRound, setCanAdvanceRound] = useState(false);
   const [roundScoreStart, setRoundScoreStart] = useState(0);
+  const [comboMultiplier, setComboMultiplier] = useState(1);
+  const [comboWindowLeft, setComboWindowLeft] = useState(0);
+  const [comboPulse, setComboPulse] = useState(false);
+  const [feedbackBursts, setFeedbackBursts] = useState<
+    Array<{ id: number; text: string; tone: "score" | "combo" | "bonus" }>
+  >([]);
 
   const [powerUp, setPowerUp] = useState<PowerUp | null>(() =>
     makePowerUp(idRef.current++, "bomb", speedMultiplier)
@@ -113,18 +128,11 @@ export function GameBoard({
   const isSlowActive = slowLeft > 0;
   const isMagnetActive = magnetLeft > 0;
   const isDoubleWordReady = doubleWordLeft > 0;
+  const roundPaceMultiplier = 1 + (currentRound - 1) * ROUND_PACE_STEP;
+  const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
   const activeTileTarget = isMultiplierActive ? baseTileCount * 2 : baseTileCount;
-  const effectivePreset = difficultyPreset === "custom" ? "standard" : difficultyPreset;
-  const goalConfig = useMemo(() => {
-    if (effectivePreset === "casual") {
-      return { score: 30, longWords: 1, minWordLength: 6, powerUps: 1 };
-    }
-    if (effectivePreset === "chaos") {
-      return { score: 60, longWords: 2, minWordLength: 7, powerUps: 3 };
-    }
-    return { score: 45, longWords: 2, minWordLength: 6, powerUps: 2 };
-  }, [effectivePreset]);
+  const [goalConfig, setGoalConfig] = useState<RoundGoalConfig>(() => rollGoalConfig(1));
 
   const roundScore = Math.max(0, score - roundScoreStart);
   const roundGoals = useMemo(
@@ -133,29 +141,19 @@ export function GameBoard({
         label: t.goalScore(goalConfig.score),
         detail: `${roundScore}/${goalConfig.score}`,
         done: roundScore >= goalConfig.score
-      },
-      {
-        label: t.goalLongWords(goalConfig.longWords, goalConfig.minWordLength),
-        detail: `${roundLongWords}/${goalConfig.longWords}`,
-        done: roundLongWords >= goalConfig.longWords
-      },
-      {
-        label: t.goalPowerUps(goalConfig.powerUps),
-        detail: `${roundPowerUps}/${goalConfig.powerUps}`,
-        done: roundPowerUps >= goalConfig.powerUps
       }
     ],
-    [goalConfig, roundLongWords, roundPowerUps, roundScore, t]
+    [goalConfig, roundScore, t]
   );
-  const powerUpLabelByKind = useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(POWERUP_META).map(([kind, meta]) => [kind, meta.label])
-      ) as Record<PowerUpKind, string>,
-    []
-  );
+  function pushFeedbackBurst(text: string, tone: "score" | "combo" | "bonus", lifetimeMs = 900) {
+    const id = feedbackIdRef.current++;
+    setFeedbackBursts((prev) => [...prev, { id, text, tone }]);
+    setTimeout(() => {
+      setFeedbackBursts((prev) => prev.filter((entry) => entry.id !== id));
+    }, lifetimeMs);
+  }
 
-  function resetRoundState(resetScore: boolean) {
+  function resetRoundState(resetScore: boolean, roundNumber = currentRound) {
     const nextScoreStart = resetScore ? 0 : score;
     idRef.current = 1;
     tickRef.current = 0;
@@ -165,9 +163,14 @@ export function GameBoard({
     setTiles(Array.from({ length: baseTileCount }, () => makeTile(idRef.current++, language, speedMultiplier)));
     setTray([]);
     setSubmittedWords([]);
-    setRoundLongWords(0);
-    setRoundPowerUps(0);
     setRoundScoreStart(nextScoreStart);
+    setGoalConfig(rollGoalConfig(roundNumber));
+    setCanAdvanceRound(false);
+    setIsGameOver(false);
+    setComboMultiplier(1);
+    setComboWindowLeft(0);
+    setComboPulse(false);
+    setFeedbackBursts([]);
     setIsChecking(false);
     setTimeLeft(roundSeconds);
     setIsRunning(true);
@@ -188,8 +191,9 @@ export function GameBoard({
     if (resetScore) {
       setScore(0);
       setCurrentRound(1);
+      setGoalConfig(rollGoalConfig(1));
       setIsBetweenRounds(false);
-      setIsMatchComplete(false);
+      setIsGameOver(false);
     }
 
     setStatus(UI_TEXT[language].initialStatus);
@@ -201,7 +205,7 @@ export function GameBoard({
       return;
     }
     resetRoundState(true);
-  }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs, difficultyPreset]);
+  }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs]);
 
   useEffect(() => {
     const loop = (now: number) => {
@@ -215,7 +219,7 @@ export function GameBoard({
       }
 
       const speedFactor = isFrozen ? 0 : isSlowActive ? 0.45 : 1;
-      const dt = dtBase * speedFactor;
+      const dt = dtBase * speedFactor * roundPaceMultiplier;
 
       setTiles((prevTiles) => {
         const nextTiles = prevTiles
@@ -257,7 +261,7 @@ export function GameBoard({
 
         const moved = updateMovingEntity(prevPowerUp, POWERUP_SIZE, dt, maxBounces);
         if (!moved) {
-          powerUpRespawnAtRef.current = now + powerUpRespawnMs;
+          powerUpRespawnAtRef.current = now + effectivePowerUpRespawnMs;
           return null;
         }
         return moved;
@@ -279,9 +283,10 @@ export function GameBoard({
     isSlowActive,
     isMagnetActive,
     maxBounces,
-    powerUpRespawnMs,
+    effectivePowerUpRespawnMs,
     speedMultiplier,
-    language
+    language,
+    roundPaceMultiplier
   ]);
 
   useEffect(() => {
@@ -289,21 +294,25 @@ export function GameBoard({
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (currentRound >= MATCH_ROUNDS) {
-            setIsRunning(false);
-            setIsMatchComplete(true);
-            setStatus(t.matchComplete);
-          } else {
-            setIsRunning(false);
-            setIsPaused(true);
-            setIsBetweenRounds(true);
-            setStatus(`${t.round} ${currentRound}/${MATCH_ROUNDS} ${t.timeUpStatus}`);
-          }
+          const scoreGoalMet = roundScore >= goalConfig.score;
+          setCanAdvanceRound(scoreGoalMet);
+
+          setIsRunning(false);
+          setIsPaused(true);
+          setIsBetweenRounds(scoreGoalMet);
+          setIsGameOver(!scoreGoalMet);
+          setStatus(scoreGoalMet ? `${t.round} ${currentRound} ${t.timeUpStatus}` : t.statusScoreRequired(goalConfig.score));
           return 0;
         }
         return prev - 1;
       });
 
+      setComboWindowLeft((prev) => {
+        if (prev <= 0) return 0;
+        const next = prev - 1;
+        if (next === 0) setComboMultiplier(1);
+        return next;
+      });
       setMultiplierLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setFreezeLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setShieldLeft((prev) => (prev > 0 ? prev - 1 : 0));
@@ -319,7 +328,16 @@ export function GameBoard({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, isPaused, t.timeUpStatus, t.matchComplete, t.round, currentRound]);
+  }, [
+    isRunning,
+    isPaused,
+    t.timeUpStatus,
+    t.statusScoreRequired,
+    t.round,
+    currentRound,
+    goalConfig,
+    roundScore
+  ]);
 
   useEffect(() => {
     if (!isRunning || !isRefreshing) return undefined;
@@ -436,7 +454,7 @@ export function GameBoard({
     if (candidates.length === 0) return null;
 
     for (const candidate of candidates) {
-      const isValid = await isRealWord(candidate.toLowerCase(), dictionaryLocale(language));
+      const isValid = await isRealWord(candidate.toLowerCase(), language);
       if (isValid) return candidate;
     }
 
@@ -470,14 +488,26 @@ export function GameBoard({
     let messageSuffix = "";
     if (isDoubleWordReady) {
       awardedPoints *= 2;
-      messageSuffix = " with Double Word";
+      messageSuffix = t.doubleWordSuffix;
       setDoubleWordLeft(0);
+    }
+    const nextComboMultiplier =
+      comboWindowLeft > 0
+        ? Math.min(COMBO_MAX_MULTIPLIER, comboMultiplier + COMBO_BONUS_STEP)
+        : 1;
+    awardedPoints = Math.round(awardedPoints * nextComboMultiplier);
+    setComboMultiplier(nextComboMultiplier);
+    setComboWindowLeft(COMBO_WINDOW_SECONDS);
+    if (nextComboMultiplier > comboMultiplier) {
+      setComboPulse(true);
+      pushFeedbackBurst(`x${nextComboMultiplier.toFixed(2)}`, "combo", 800);
+    }
+    if (nextComboMultiplier > 1) {
+      messageSuffix += t.comboSuffix(nextComboMultiplier);
     }
 
     setScore((prev) => prev + awardedPoints);
-    if (resolvedWord.length >= goalConfig.minWordLength) {
-      setRoundLongWords((prev) => prev + 1);
-    }
+    pushFeedbackBurst(`+${awardedPoints}`, "score");
     setSubmittedWords((prev) => [
       ...prev,
       { word: resolvedWord.toLocaleUpperCase(language), points: awardedPoints }
@@ -485,6 +515,12 @@ export function GameBoard({
     setTray([]);
     setStatus(t.statusGreatWord(resolvedWord.toLocaleUpperCase(language), awardedPoints, messageSuffix));
   }
+
+  useEffect(() => {
+    if (!comboPulse) return undefined;
+    const timeout = setTimeout(() => setComboPulse(false), 260);
+    return () => clearTimeout(timeout);
+  }, [comboPulse]);
 
   function removeLastFromTray() {
     if (!isRunning || isPaused || isRefreshing || isShieldActive) return;
@@ -518,9 +554,8 @@ export function GameBoard({
     if (!isRunning || isPaused || isRefreshing || !powerUp) return;
 
     const { kind } = powerUp;
-    setRoundPowerUps((prev) => prev + 1);
     setPowerUp(null);
-    powerUpRespawnAtRef.current = performance.now() + powerUpRespawnMs;
+    powerUpRespawnAtRef.current = performance.now() + effectivePowerUpRespawnMs;
     const capDuration = (seconds: number) => Math.min(seconds, MAX_EFFECT_SECONDS);
 
     if (kind === "bomb") {
@@ -597,11 +632,14 @@ export function GameBoard({
   }
 
   function restartRound() {
+    if (isGameOver) {
+      startNewGame();
+      return;
+    }
     resetRoundState(false);
     setIsMenuOpen(false);
     setIsHelpModalOpen(false);
     setIsBetweenRounds(false);
-    setIsMatchComplete(false);
   }
 
   function startNewGame() {
@@ -611,10 +649,11 @@ export function GameBoard({
   }
 
   function startNextRound() {
-    if (currentRound >= MATCH_ROUNDS) return;
-    setCurrentRound((prev) => prev + 1);
+    if (!canAdvanceRound) return;
+    const nextRound = currentRound + 1;
+    setCurrentRound(nextRound);
     setIsBetweenRounds(false);
-    resetRoundState(false);
+    resetRoundState(false, nextRound);
   }
 
   function togglePauseResume() {
@@ -643,7 +682,6 @@ export function GameBoard({
       <HelpModal
         isOpen={isHelpModalOpen}
         powerUpOrder={POWERUP_TYPES}
-        powerUpLabelByKind={powerUpLabelByKind}
         powerUpHelpByKind={t.powerUpHelp}
         onClose={() => setIsHelpModalOpen(false)}
         labels={{
@@ -658,25 +696,27 @@ export function GameBoard({
         }}
       />
 
-      {isBetweenRounds && !isMatchComplete && (
+      {isBetweenRounds && (
         <div className="modalBackdrop" role="presentation">
           <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.nextRound}>
-            <h2>{t.nextRound}</h2>
+            <h2>{canAdvanceRound ? t.nextRound : t.restartRound}</h2>
             <p>
-              {t.round} {currentRound + 1}/{MATCH_ROUNDS}
+              {canAdvanceRound ? `${t.round} ${currentRound + 1}` : t.statusScoreRequired(goalConfig.score)}
             </p>
-            <button type="button" onClick={startNextRound}>
-              {t.nextRound}
+            <p>{t.goalScore(goalConfig.score)}: {roundScore}/{goalConfig.score}</p>
+            <button type="button" onClick={canAdvanceRound ? startNextRound : restartRound}>
+              {canAdvanceRound ? t.nextRound : t.restartRound}
             </button>
           </section>
         </div>
       )}
 
-      {isMatchComplete && (
+      {isGameOver && (
         <div className="modalBackdrop" role="presentation">
           <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.matchComplete}>
             <h2>{t.matchComplete}</h2>
             <p>{t.finalScore}: {score}</p>
+            <p>{t.statusScoreRequired(goalConfig.score)}</p>
             <button type="button" onClick={startNewGame}>
               {t.playMatchAgain}
             </button>
@@ -701,7 +741,11 @@ export function GameBoard({
             setIsMenuOpen(false);
           }}
           onRestartRound={() => {
-            restartRound();
+            if (isGameOver) {
+              startNewGame();
+            } else {
+              restartRound();
+            }
             setIsMenuOpen(false);
           }}
           onNewGame={startNewGame}
@@ -727,27 +771,29 @@ export function GameBoard({
             isRunning={isRunning}
             isRefreshing={isRefreshing || isPaused}
             explosionPulse={explosionPulse}
+            feedbackBursts={feedbackBursts}
             onCollectTile={collectTile}
             onActivatePowerUp={activatePowerUp}
             onPointerMove={handleFieldPointerMove}
             onPointerLeave={handleFieldPointerLeave}
             powerUpHelpByKind={t.powerUpHelp}
-            powerUpLabelByKind={powerUpLabelByKind}
           />
           <p className="status statusUnderBoard">{status}</p>
         </section>
 
         <section className="rightColumn">
           <GameHud
-            score={score}
+            scoreProgress={`${roundScore}/${goalConfig.score}`}
             timeLeft={timeLeft}
-            roundLabel={`${currentRound}/${MATCH_ROUNDS}`}
+            roundLabel={`${currentRound}`}
+            comboLabel={comboWindowLeft > 0 ? `x${comboMultiplier.toFixed(2)} (${comboWindowLeft}s)` : "x1.00"}
+            comboIsPulsing={comboPulse}
             letterCount={tiles.length}
             targetCount={activeTileTarget}
             languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
             labels={{
-              totalScore: t.totalScore,
               round: t.round,
+              combo: t.combo,
               timeLeft: t.timeLeft,
               flyingLetters: t.flyingLetters,
               target: t.target,
@@ -765,12 +811,11 @@ export function GameBoard({
             isRefreshing={isRefreshing || isPaused}
             isShieldActive={isShieldActive}
             activeEffects={activeEffects}
-            goals={roundGoals}
             submittedWords={submittedWords}
             onSubmitWord={submitWord}
             onBackspace={removeLastFromTray}
             onClear={clearTray}
-            onRestart={restartRound}
+            onRestart={isGameOver ? startNewGame : restartRound}
             labels={{
               trayPlaceholder: t.trayPlaceholder,
               wordPoints: t.wordPoints,
@@ -781,7 +826,6 @@ export function GameBoard({
               restartRound: t.restartRound,
               playAgain: t.playAgain,
               acceptedWords: t.acceptedWords,
-              goals: t.goals,
               noneYet: t.noneYet,
               effects: t.effects,
               noEffects: t.noEffects

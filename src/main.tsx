@@ -27,15 +27,27 @@ class RootErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundar
     if (!this.state.hasError) return this.props.children;
     return (
       <main className="app">
-        <h1>Scrabble Bounce</h1>
+        <h1>Word Bouncer</h1>
         <p className="status">Render error: {this.state.message}</p>
       </main>
     );
   }
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <RootErrorBoundary>
-    <App />
-  </RootErrorBoundary>
-);
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Root element #root not found");
+}
+
+try {
+  ReactDOM.createRoot(rootElement).render(
+    <RootErrorBoundary>
+      <App />
+    </RootErrorBoundary>
+  );
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Unknown startup error";
+  rootElement.innerHTML = `<main style="padding:16px;font-family:Arial,sans-serif"><h1>Word Bouncer</h1><p>Startup error: ${message}</p></main>`;
+  // Keep this console log for local debugging.
+  console.error(error);
+}

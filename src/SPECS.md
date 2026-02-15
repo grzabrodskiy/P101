@@ -1,11 +1,11 @@
-# Scrabble Bounce Game Spec
+# Word Bouncer Game Spec
 
 ## Goal
 Build words by tapping flying Scrabble-style letter tiles and submit valid words for points.
 
 ## Core Gameplay
 - Game field is a square play area.
-- Gameplay is organized as a `3`-round match by default.
+- Gameplay is endless multi-round progression.
 - Game runs in timed rounds selected before start: `60s`, `90s`, or `120s` (`90s` default).
 - Base active letter count defaults to `8` and is configurable.
 - Letter tiles move continuously with velocity vectors.
@@ -20,9 +20,9 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Active tile alphabet, frequencies, and letter scores depend on selected language.
 - Example: Russian uses Cyrillic tiles and language-specific scoring/weights.
 - When timer reaches `0`, round stops and interactions are disabled.
-- If not on final round, player advances to next round.
-- After final round, match summary is shown with final score.
-- User can restart a round or start a new match at any time.
+- When timer reaches `0`, player advances to the next round.
+- There is no final round cap; difficulty keeps increasing by round.
+- User can restart the current round or start a new game at any time.
 
 ## Power-Up System
 - Power-ups are rendered in the field and move like letters.
@@ -84,12 +84,11 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Automatic restart on options change resets score and accepted words.
 
 ## Round Goals
-- Each round has 3 active goals:
-- reach a score target,
-- submit long words target (`6+` or `7+` letters by difficulty),
-- use a target number of power-ups.
-- Goal targets scale by difficulty preset.
-- Goals are shown in the right panel with live progress and completion state.
+- Each round has one goal: reach the score target.
+- Score target scales by round and is the same for every difficulty: `45` in round 1, `60` in round 2, `75` in round 3, etc.
+- Next round unlocks only if the round score goal is met.
+- If the score goal is missed when the timer ends, the run ends (game over) and player starts a new game.
+- Goal progress is shown in the top HUD as `current/target` (for example `0/45`).
 
 ## Help Popup
 - Help is shown as a modal popup opened from the in-game menu.
@@ -100,7 +99,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 ## Word Validation
 - Submitted word must be at least `4` characters.
 - Validation is performed against a dictionary API using the selected language locale.
-- If API is unavailable, a small language-specific fallback dictionary is used.
+- There is no local fallback dictionary; if API lookup fails, word validation fails.
 - Wildcard words are evaluated by trying dictionary-valid substitutions.
 - Invalid words do not score and tray remains unchanged.
 
@@ -109,8 +108,12 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Word score is sum of tray letter values at submit time.
 - Wildcard tile value is `0`.
 - If `DW` is active, next valid word score is doubled.
+- Combo scoring is active:
+- valid submits within `8s` chain combo;
+- combo multiplier starts at `x1.00`, increases by `+0.25` per chain step, capped at `x2.00`;
+- combo resets when timer expires.
 - On valid submit, add points to total score, record accepted word, then clear tray.
-- Score is cumulative across rounds within a match.
+- Score is cumulative across endless rounds until user starts a new game.
 
 ## UI Requirements
 - Show current total score.
@@ -123,8 +126,14 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Status message is displayed directly below the game board.
 - Show tray word and computed points.
 - Show accepted words list with points.
-- Show current round progress (`current/total`) in HUD.
-- Show between-round and match-complete overlays.
+- Show current round number in HUD.
+- Show score-goal progress in HUD as `current/target`.
+- Show live combo multiplier (and remaining combo window while active) in HUD.
+- Combo HUD value pulses when combo increases.
+- Show between-round overlay with round goal completion bonus summary.
+- Successful submits show floating in-field score popups (and combo popup when combo increases).
+- Power-ups use a unified icon system (emoji glyph + optional mini badge like `x2`, `DW`, `+10`) in-field and in Help.
+- Power-up circles are color-coded with distinct gradients and subtle glow to improve at-a-glance recognition.
 - On desktop, controls/tray are to the right of the square.
 - On smaller screens, layout stacks vertically and remains touch-friendly.
 
@@ -135,6 +144,10 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Core gameplay state/loop logic should live in a dedicated `GameBoard` component.
 - Run locally with `pnpm run dev` (`127.0.0.1:5173`, strict port).
 - Production build output directory is `build/`.
+
+## Phase 3 Progression Tuning
+- Round pace scales with round index (`+12%` movement speed per round).
+- Power-up respawn cadence also accelerates with round pace.
 
 ## Localization
 - UI supports 5 languages: English (default), German, French, Italian, Russian.

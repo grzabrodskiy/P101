@@ -105,7 +105,6 @@ export default function App() {
         speedMultiplier={speedMultiplier}
         maxBounces={maxBounces}
         powerUpRespawnMs={powerUpRespawnMs}
-        difficultyPreset={selectedPreset}
         onOpenOptions={() => setIsOptionsModalOpen(true)}
       />
     </main>

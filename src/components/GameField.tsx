@@ -11,12 +11,12 @@ type GameFieldProps = {
   isRunning: boolean;
   isRefreshing: boolean;
   explosionPulse: boolean;
+  feedbackBursts: Array<{ id: number; text: string; tone: "score" | "combo" | "bonus" }>;
   onCollectTile: (id: number) => void;
   onActivatePowerUp: (event: SyntheticEvent) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLElement>) => void;
   onPointerLeave: () => void;
   powerUpHelpByKind: Record<PowerUpKind, string>;
-  powerUpLabelByKind: Record<PowerUpKind, string>;
 };
 
 export function GameField({
@@ -25,12 +25,12 @@ export function GameField({
   isRunning,
   isRefreshing,
   explosionPulse,
+  feedbackBursts,
   onCollectTile,
   onActivatePowerUp,
   onPointerMove,
   onPointerLeave,
-  powerUpHelpByKind,
-  powerUpLabelByKind
+  powerUpHelpByKind
 }: GameFieldProps) {
   return (
     <section
@@ -49,12 +49,17 @@ export function GameField({
           powerUp={powerUp}
           disabled={!isRunning || isRefreshing}
           helpText={powerUpHelpByKind[powerUp.kind]}
-          label={powerUpLabelByKind[powerUp.kind]}
           onActivate={onActivatePowerUp}
         />
       )}
 
       {explosionPulse && <div className="explosion" />}
+
+      {feedbackBursts.map((burst) => (
+        <div key={burst.id} className={`feedbackBurst feedbackBurst-${burst.tone}`}>
+          {burst.text}
+        </div>
+      ))}
     </section>
   );
 }

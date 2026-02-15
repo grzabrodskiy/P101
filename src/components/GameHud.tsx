@@ -1,36 +1,43 @@
 type GameHudProps = {
-  score: number;
+  scoreProgress: string;
   timeLeft: number;
   letterCount: number;
   targetCount: number;
   languageLabel: string;
   roundLabel: string;
+  comboLabel: string;
+  comboIsPulsing: boolean;
   labels: {
-    totalScore: string;
     timeLeft: string;
     flyingLetters: string;
     target: string;
     language: string;
     round: string;
+    combo: string;
   };
 };
 
 export function GameHud({
-  score,
+  scoreProgress,
   timeLeft,
   letterCount,
   targetCount,
   languageLabel,
   roundLabel,
+  comboLabel,
+  comboIsPulsing,
   labels
 }: GameHudProps) {
   return (
     <section className="hud">
-      <span>{labels.totalScore}: {score}</span>
+      <span>{scoreProgress}</span>
       <span>{labels.timeLeft}: {timeLeft}s</span>
       <span>{labels.round}: {roundLabel}</span>
       <span>{labels.flyingLetters}: {letterCount}</span>
       <span>{labels.target}: {targetCount}</span>
+      <span className={comboIsPulsing ? "hudCombo hudComboPulse" : "hudCombo"}>
+        {labels.combo}: {comboLabel}
+      </span>
       <span>{labels.language}: {languageLabel}</span>
     </section>
   );

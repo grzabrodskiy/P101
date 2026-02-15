@@ -19,6 +19,10 @@ export const TRANSITION_SECONDS = 0.24;
 export const REFRESH_SPAWN_MS = 130;
 export const EXPLOSION_MS = 260;
 export const POWERUP_RESPAWN_MS = 1800;
+export const COMBO_WINDOW_SECONDS = 8;
+export const COMBO_BONUS_STEP = 0.25;
+export const COMBO_MAX_MULTIPLIER = 2;
+export const ROUND_PACE_STEP = 0.12;
 
 export const DIFFICULTY_PRESETS = {
   casual: {
@@ -72,30 +76,6 @@ export const SCRABBLE_VALUES = {
   Z: 10
 } as const;
 
-export const FALLBACK_WORDS = new Set([
-  "apple",
-  "bird",
-  "book",
-  "cat",
-  "code",
-  "dog",
-  "game",
-  "green",
-  "home",
-  "house",
-  "love",
-  "note",
-  "phone",
-  "play",
-  "road",
-  "score",
-  "stone",
-  "sun",
-  "tree",
-  "word",
-  "world"
-]);
-
 export const LETTER_FREQUENCY_BONUS: Partial<Record<Letter, number>> = {
   E: 4,
   T: 3,
@@ -130,3 +110,18 @@ export const POWERUP_META: Record<
 };
 
 export const POWERUP_TYPES = Object.keys(POWERUP_META) as PowerUpKind[];
+
+export const POWERUP_SPAWN_WEIGHTS: Record<PowerUpKind, number> = {
+  bomb: 1,
+  multiplier: 1,
+  freeze: 1,
+  shield: 1,
+  wild: 4,
+  reroll: 1,
+  slow: 1,
+  double: 1,
+  magnet: 1,
+  "extra-time": 1,
+  lock: 1,
+  purge: 1
+};
