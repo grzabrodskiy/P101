@@ -2,7 +2,7 @@
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   line-height: 1.4;
   color: #1f2937;
-  background: radial-gradient(circle at top, #fef3c7 0%, #fde68a 30%, #f59e0b 100%);
+  background: radial-gradient(circle at top, #fee2e2 0%, #fecaca 38%, #fca5a5 100%);
 }
 
 * {
@@ -15,79 +15,218 @@ body {
 }
 
 .app {
-  max-width: 420px;
+  max-width: 980px;
   margin: 0 auto;
   min-height: 100vh;
   padding: 24px 20px 36px;
-  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 12px;
+}
+
+.gameLayout {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
   gap: 14px;
+}
+
+.sidePanel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 2.2rem;
+  text-align: center;
 }
 
 .status {
   margin: 0;
-  min-height: 1.4em;
+  min-height: 1.6em;
+  text-align: center;
+  font-weight: 600;
 }
 
 .hud {
   width: 100%;
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
   font-weight: 700;
+  background: #fffbeb;
+  border: 2px solid #111827;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.hud span {
+  min-width: 120px;
 }
 
 .field {
   position: relative;
-  width: 300px;
-  height: 300px;
   border: 3px solid #111827;
   border-radius: 14px;
-  background: #fff7ed;
+  background:
+    linear-gradient(45deg, #fff7ed 25%, transparent 25%) -10px 0 / 20px 20px,
+    linear-gradient(-45deg, #fff7ed 25%, transparent 25%) -10px 0 / 20px 20px,
+    linear-gradient(45deg, transparent 75%, #fff7ed 75%) -10px 0 / 20px 20px,
+    linear-gradient(-45deg, transparent 75%, #fff7ed 75%) -10px 0 / 20px 20px,
+    #ffedd5;
   overflow: hidden;
+  touch-action: manipulation;
 }
 
-.target {
+.tile {
   position: absolute;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 999px;
-  background: #ef4444;
+  left: 0;
+  top: 0;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #1f2937;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #111827;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 120ms ease;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.24);
+  user-select: none;
+  will-change: transform, opacity;
 }
 
-.target:active {
-  transform: scale(0.95);
+.tile:active {
+  scale: 0.95;
 }
 
-.target:disabled {
-  opacity: 0.35;
+.tile:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.letter {
+  font-weight: 800;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.value {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.tray {
+  width: 100%;
+  border: 2px solid #111827;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+
+.trayWord {
+  min-height: 1.5em;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.trayScore {
+  margin-top: 4px;
+  color: #4b5563;
+}
+
+.controls {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.controls button {
+  border: 2px solid #111827;
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #e5e7eb;
+}
+
+.controls button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.reset {
-  border: 0;
-  border-radius: 999px;
-  padding: 10px 18px;
+.restartButton {
+  width: 100%;
+  border: 2px solid #111827;
+  border-radius: 10px;
+  padding: 10px 8px;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  color: #111827;
-  background: #fcd34d;
+  background: #fbbf24;
+}
+
+.submitted {
+  width: 100%;
+  border: 2px solid #111827;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+
+.submitted h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.submitted ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.submitted li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.empty {
+  margin: 0;
+  color: #6b7280;
+}
+
+@media (max-width: 900px) {
+  .gameLayout {
+    flex-direction: column;
+  }
+
+  .sidePanel {
+    width: 100%;
+  }
+
 }
 
 @media (max-width: 380px) {
   .field {
-    width: 260px;
-    height: 260px;
+    width: 280px !important;
+    height: 280px !important;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
   }
 }
