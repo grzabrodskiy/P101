@@ -3,3 +3,4 @@ build/
 dist/
 .pnpm-store/
 .DS_Store
+.vercel
