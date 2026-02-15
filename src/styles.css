@@ -1,0 +1,93 @@
+:root {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  line-height: 1.4;
+  color: #1f2937;
+  background: radial-gradient(circle at top, #fef3c7 0%, #fde68a 30%, #f59e0b 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 24px 20px 36px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.status {
+  margin: 0;
+  min-height: 1.4em;
+}
+
+.hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+.field {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border: 3px solid #111827;
+  border-radius: 14px;
+  background: #fff7ed;
+  overflow: hidden;
+}
+
+.target {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: #ef4444;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 120ms ease;
+}
+
+.target:active {
+  transform: scale(0.95);
+}
+
+.target:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.reset {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #111827;
+  background: #fcd34d;
+}
+
+@media (max-width: 380px) {
+  .field {
+    width: 260px;
+    height: 260px;
+  }
+}
