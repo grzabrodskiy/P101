@@ -1,41 +1,100 @@
 import {
   FALLBACK_WORDS,
   FIELD_SIZE,
-  LETTER_FREQUENCY_BONUS,
   MAX_BOUNCES,
   POWERUP_SIZE,
   POWERUP_TYPES,
-  SCRABBLE_VALUES,
   TILE_SIZE,
   TRANSITION_SECONDS
 } from "./constants";
+import { dictionaryLocale, type LanguageCode } from "./i18n";
 import type { Letter, MovingEntity, PowerUp, PowerUpKind, Tile } from "./types";
 
-const LETTER_WEIGHTS = (Object.keys(SCRABBLE_VALUES) as Letter[]).map((letter) => {
-  const value = SCRABBLE_VALUES[letter];
-  const inverseValueWeight = Math.max(1, Math.round(14 / value));
-  const commonLetterBonus = LETTER_FREQUENCY_BONUS[letter] ?? 0;
-  return {
-    letter,
-    weight: inverseValueWeight + commonLetterBonus
-  };
-});
+type LetterProfile = Record<string, { value: number; weight: number }>;
 
-const TOTAL_LETTER_WEIGHT = LETTER_WEIGHTS.reduce((sum, entry) => sum + entry.weight, 0);
+const LANGUAGE_LETTER_PROFILES: Record<LanguageCode, LetterProfile> = {
+  en: {
+    E: { value: 1, weight: 12 }, A: { value: 1, weight: 9 }, I: { value: 1, weight: 9 }, O: { value: 1, weight: 8 },
+    N: { value: 1, weight: 6 }, R: { value: 1, weight: 6 }, T: { value: 1, weight: 6 }, L: { value: 1, weight: 4 },
+    S: { value: 1, weight: 4 }, U: { value: 1, weight: 4 }, D: { value: 2, weight: 4 }, G: { value: 2, weight: 3 },
+    B: { value: 3, weight: 2 }, C: { value: 3, weight: 2 }, M: { value: 3, weight: 2 }, P: { value: 3, weight: 2 },
+    F: { value: 4, weight: 2 }, H: { value: 4, weight: 2 }, V: { value: 4, weight: 2 }, W: { value: 4, weight: 2 },
+    Y: { value: 4, weight: 2 }, K: { value: 5, weight: 1 }, J: { value: 8, weight: 1 }, X: { value: 8, weight: 1 },
+    Q: { value: 10, weight: 1 }, Z: { value: 10, weight: 1 }
+  },
+  de: {
+    E: { value: 1, weight: 15 }, N: { value: 1, weight: 9 }, I: { value: 1, weight: 7 }, S: { value: 1, weight: 7 },
+    R: { value: 1, weight: 6 }, A: { value: 1, weight: 6 }, T: { value: 1, weight: 6 }, D: { value: 1, weight: 5 },
+    H: { value: 2, weight: 4 }, U: { value: 1, weight: 4 }, L: { value: 2, weight: 3 }, C: { value: 4, weight: 2 },
+    G: { value: 2, weight: 3 }, M: { value: 3, weight: 3 }, O: { value: 2, weight: 3 }, B: { value: 3, weight: 2 },
+    W: { value: 3, weight: 2 }, F: { value: 4, weight: 2 }, K: { value: 4, weight: 2 }, Z: { value: 3, weight: 2 },
+    P: { value: 4, weight: 1 }, V: { value: 6, weight: 1 }, J: { value: 6, weight: 1 }, Y: { value: 10, weight: 1 },
+    X: { value: 8, weight: 1 }, Q: { value: 10, weight: 1 }, Ä: { value: 6, weight: 1 }, Ö: { value: 8, weight: 1 },
+    Ü: { value: 6, weight: 1 }, ß: { value: 8, weight: 1 }
+  },
+  fr: {
+    E: { value: 1, weight: 15 }, A: { value: 1, weight: 9 }, I: { value: 1, weight: 8 }, N: { value: 1, weight: 7 },
+    O: { value: 1, weight: 6 }, R: { value: 1, weight: 6 }, S: { value: 1, weight: 6 }, T: { value: 1, weight: 6 },
+    U: { value: 1, weight: 6 }, L: { value: 1, weight: 5 }, D: { value: 2, weight: 3 }, M: { value: 2, weight: 3 },
+    G: { value: 2, weight: 2 }, B: { value: 3, weight: 2 }, C: { value: 3, weight: 2 }, P: { value: 3, weight: 2 },
+    F: { value: 4, weight: 2 }, H: { value: 4, weight: 2 }, V: { value: 4, weight: 2 }, J: { value: 8, weight: 1 },
+    Q: { value: 8, weight: 1 }, K: { value: 10, weight: 1 }, W: { value: 10, weight: 1 }, X: { value: 10, weight: 1 },
+    Y: { value: 10, weight: 1 }, Z: { value: 10, weight: 1 }
+  },
+  it: {
+    E: { value: 1, weight: 12 }, A: { value: 1, weight: 11 }, I: { value: 1, weight: 11 }, O: { value: 1, weight: 10 },
+    N: { value: 1, weight: 6 }, R: { value: 1, weight: 6 }, T: { value: 1, weight: 6 }, L: { value: 2, weight: 5 },
+    S: { value: 1, weight: 5 }, C: { value: 2, weight: 5 }, D: { value: 3, weight: 4 }, P: { value: 3, weight: 3 },
+    U: { value: 3, weight: 3 }, M: { value: 2, weight: 3 }, G: { value: 2, weight: 3 }, B: { value: 5, weight: 2 },
+    F: { value: 4, weight: 2 }, V: { value: 4, weight: 2 }, H: { value: 8, weight: 1 }, Z: { value: 8, weight: 2 },
+    Q: { value: 10, weight: 1 }
+  },
+  ru: {
+    О: { value: 1, weight: 10 }, А: { value: 1, weight: 8 }, Е: { value: 1, weight: 8 }, И: { value: 1, weight: 7 },
+    Н: { value: 1, weight: 6 }, Т: { value: 1, weight: 6 }, С: { value: 1, weight: 6 }, Р: { value: 1, weight: 6 },
+    В: { value: 1, weight: 5 }, Л: { value: 2, weight: 4 }, К: { value: 2, weight: 4 }, М: { value: 2, weight: 3 },
+    Д: { value: 2, weight: 3 }, П: { value: 2, weight: 3 }, У: { value: 3, weight: 3 }, Я: { value: 3, weight: 3 },
+    Ы: { value: 4, weight: 2 }, Ь: { value: 3, weight: 2 }, Г: { value: 3, weight: 2 }, З: { value: 5, weight: 2 },
+    Б: { value: 3, weight: 2 }, Ч: { value: 5, weight: 2 }, Й: { value: 4, weight: 1 }, Х: { value: 5, weight: 1 },
+    Ж: { value: 5, weight: 1 }, Ш: { value: 8, weight: 1 }, Ю: { value: 8, weight: 1 }, Ц: { value: 10, weight: 1 },
+    Щ: { value: 10, weight: 1 }, Э: { value: 10, weight: 1 }, Ф: { value: 10, weight: 1 }, Ъ: { value: 10, weight: 1 }
+  }
+};
 
-export function randomLetter(): { char: Letter; value: number } {
-  let pick = Math.random() * TOTAL_LETTER_WEIGHT;
-  let char: Letter = "E";
+type WeightedLetter = { char: Letter; value: number; weight: number };
 
-  for (const entry of LETTER_WEIGHTS) {
+const WEIGHTED_LETTERS_BY_LANGUAGE: Record<LanguageCode, WeightedLetter[]> = Object.fromEntries(
+  Object.entries(LANGUAGE_LETTER_PROFILES).map(([language, profile]) => [
+    language,
+    Object.entries(profile).map(([char, spec]) => ({
+      char,
+      value: spec.value,
+      weight: spec.weight
+    }))
+  ])
+) as Record<LanguageCode, WeightedLetter[]>;
+
+const TOTAL_WEIGHT_BY_LANGUAGE: Record<LanguageCode, number> = Object.fromEntries(
+  Object.entries(WEIGHTED_LETTERS_BY_LANGUAGE).map(([language, entries]) => [
+    language,
+    entries.reduce((sum, entry) => sum + entry.weight, 0)
+  ])
+) as Record<LanguageCode, number>;
+
+export function randomLetter(language: LanguageCode): { char: Letter; value: number } {
+  const entries = WEIGHTED_LETTERS_BY_LANGUAGE[language] ?? WEIGHTED_LETTERS_BY_LANGUAGE.en;
+  const totalWeight = TOTAL_WEIGHT_BY_LANGUAGE[language] ?? TOTAL_WEIGHT_BY_LANGUAGE.en;
+
+  let pick = Math.random() * totalWeight;
+  for (const entry of entries) {
     pick -= entry.weight;
     if (pick <= 0) {
-      char = entry.letter;
-      break;
+      return { char: entry.char, value: entry.value };
     }
   }
 
-  return { char, value: SCRABBLE_VALUES[char] };
+  const fallback = entries[0] ?? WEIGHTED_LETTERS_BY_LANGUAGE.en[0];
+  return { char: fallback.char, value: fallback.value };
 }
 
 export function randomVelocity(): { vx: number; vy: number } {
@@ -164,8 +223,8 @@ export function updateMovingEntity<T extends MovingEntity>(entity: T, size: numb
   return { ...entity, x, y, vx, vy, bounces, state, stateAge };
 }
 
-export function makeTile(id: number): Tile {
-  const { char, value } = randomLetter();
+export function makeTile(id: number, language: LanguageCode): Tile {
+  const { char, value } = randomLetter(language);
   return {
     ...spawnMovingEntity(id, TILE_SIZE),
     char,
@@ -184,24 +243,64 @@ export function makePowerUp(id: number, kind?: PowerUpKind): PowerUp {
   };
 }
 
-export async function isRealWord(word: string): Promise<boolean> {
-  if (word.length < 2) return false;
-  try {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    if (!response.ok) return false;
+const FALLBACK_WORDS_BY_LANGUAGE: Record<LanguageCode, Set<string>> = {
+  en: FALLBACK_WORDS,
+  de: new Set(["haus", "hund", "baum", "spiel", "wort", "straße", "schule", "zeit"]),
+  fr: new Set(["maison", "chien", "arbre", "jeu", "mot", "route", "temps", "ville"]),
+  it: new Set(["casa", "cane", "albero", "gioco", "parola", "strada", "tempo", "mondo"]),
+  ru: new Set(["дом", "мир", "слово", "игра", "время", "город", "книга", "дорога"])
+};
+
+const WORD_VALIDATION_CACHE = new Map<string, boolean>();
+
+async function queryDictionary(word: string, locale: string): Promise<boolean> {
+  const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/${locale}/${word}`);
+  if (response.ok) {
     const data = await response.json();
     return Array.isArray(data) && data.length > 0;
+  }
+
+  if (response.status === 404) {
+    return false;
+  }
+
+  throw new Error(`dictionary-${locale}-status-${response.status}`);
+}
+
+export async function isRealWord(word: string, language: LanguageCode): Promise<boolean> {
+  const normalized = word.toLowerCase();
+  if (normalized.length < 2) return false;
+
+  const cacheKey = `${language}:${normalized}`;
+  const cached = WORD_VALIDATION_CACHE.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  if ((FALLBACK_WORDS_BY_LANGUAGE[language] ?? FALLBACK_WORDS).has(normalized)) {
+    WORD_VALIDATION_CACHE.set(cacheKey, true);
+    return true;
+  }
+
+  const locale = dictionaryLocale(language);
+  try {
+    const primary = await queryDictionary(normalized, locale);
+    WORD_VALIDATION_CACHE.set(cacheKey, primary);
+    return primary;
   } catch {
-    return FALLBACK_WORDS.has(word);
+    const fallback = (FALLBACK_WORDS_BY_LANGUAGE[language] ?? FALLBACK_WORDS).has(normalized);
+    WORD_VALIDATION_CACHE.set(cacheKey, fallback);
+    return fallback;
   }
 }
 
-export function wildcardCandidates(chars: Array<Letter | "*">): string[] {
+export function wildcardCandidates(chars: Array<Letter | "*">, language: LanguageCode): string[] {
   const stars = chars.filter((c) => c === "*").length;
   if (stars === 0) return [chars.join("")];
   if (stars > 2) return [];
 
-  const letters = Object.keys(SCRABBLE_VALUES) as Letter[];
+  const letters = (WEIGHTED_LETTERS_BY_LANGUAGE[language] ?? WEIGHTED_LETTERS_BY_LANGUAGE.en)
+    .slice()
+    .sort((a, b) => b.weight - a.weight)
+    .map((entry) => entry.char);
   const results: string[] = [];
 
   function build(index: number, current: string[]) {

@@ -1,18 +1,18 @@
 import type { SyntheticEvent } from "react";
 
-import { POWERUP_META, POWERUP_SIZE } from "../game/constants";
+import { POWERUP_SIZE } from "../game/constants";
 import { getEntityOpacity } from "../game/logic";
 import type { PowerUp } from "../game/types";
 
 type PowerUpTileProps = {
   powerUp: PowerUp;
   disabled: boolean;
+  helpText: string;
+  label: string;
   onActivate: (event: SyntheticEvent) => void;
 };
 
-export function PowerUpTile({ powerUp, disabled, onActivate }: PowerUpTileProps) {
-  const meta = POWERUP_META[powerUp.kind];
-
+export function PowerUpTile({ powerUp, disabled, helpText, label, onActivate }: PowerUpTileProps) {
   return (
     <button
       type="button"
@@ -26,10 +26,10 @@ export function PowerUpTile({ powerUp, disabled, onActivate }: PowerUpTileProps)
         width: POWERUP_SIZE,
         height: POWERUP_SIZE
       }}
-      aria-label={meta.help}
-      title={meta.help}
+      aria-label={helpText}
+      title={helpText}
     >
-      {meta.label}
+      {label}
     </button>
   );
 }

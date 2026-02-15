@@ -1,7 +1,7 @@
 import type { PointerEvent as ReactPointerEvent, SyntheticEvent } from "react";
 
 import { FIELD_SIZE } from "../game/constants";
-import type { PowerUp, Tile } from "../game/types";
+import type { PowerUp, PowerUpKind, Tile } from "../game/types";
 import { LetterTile } from "./LetterTile";
 import { PowerUpTile } from "./PowerUpTile";
 
@@ -15,6 +15,8 @@ type GameFieldProps = {
   onActivatePowerUp: (event: SyntheticEvent) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLElement>) => void;
   onPointerLeave: () => void;
+  powerUpHelpByKind: Record<PowerUpKind, string>;
+  powerUpLabelByKind: Record<PowerUpKind, string>;
 };
 
 export function GameField({
@@ -26,7 +28,9 @@ export function GameField({
   onCollectTile,
   onActivatePowerUp,
   onPointerMove,
-  onPointerLeave
+  onPointerLeave,
+  powerUpHelpByKind,
+  powerUpLabelByKind
 }: GameFieldProps) {
   return (
     <section
@@ -44,6 +48,8 @@ export function GameField({
         <PowerUpTile
           powerUp={powerUp}
           disabled={!isRunning || isRefreshing}
+          helpText={powerUpHelpByKind[powerUp.kind]}
+          label={powerUpLabelByKind[powerUp.kind]}
           onActivate={onActivatePowerUp}
         />
       )}

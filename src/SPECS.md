@@ -5,7 +5,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Core Gameplay
 - Game field is a square play area.
-- Game runs in timed rounds of `90` seconds.
+- Game runs in timed rounds selected before start: `60s`, `90s`, or `120s` (`90s` default).
 - Base active letter count is `8`.
 - Letter tiles move continuously with velocity vectors.
 - Letter tiles enter by crossing the boundary from outside the square.
@@ -15,6 +15,8 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Letter spawn frequency is inversely correlated with Scrabble value.
 - Common low-value letters (for example `E`, `T`, `O`) appear more often.
 - High-value letters (for example `Q`, `Z`) appear less often.
+- Active tile alphabet, frequencies, and letter scores depend on selected language.
+- Example: Russian uses Cyrillic tiles and language-specific scoring/weights.
 - When timer reaches `0`, round stops and interactions are disabled.
 - User can restart a new round at any time.
 
@@ -33,11 +35,9 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - `* Wild`: adds wildcard tile to tray (`*`, value `0`).
 - `🔁 Reroll`: rerolls low-value letters (`1-point` letters).
 - `⏳ Slow Time`: slows movement for `8s`.
-- `DW Double Word`: doubles score of next valid submitted word.
 - `DW Double Word`: doubles score of next valid submitted word, expires in `30s` if unused.
 - `🧲 Magnet`: letters drift toward pointer for `8s`.
 - `+10 Extra Time`: adds `10` seconds to round timer.
-- `🔒 Lock Letter`: next collected tray letter becomes locked.
 - `🔒 Lock Letter`: next collected tray letter becomes locked; lock charges expire in `30s`.
 - `🧹 Purge Rare`: replaces high-value rare letters (`8+` points).
 
@@ -54,15 +54,30 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Controls include `Submit Word`, `Backspace`, `Clear`, and `Restart Round` / `Play Again`.
 - Locked tray letters cannot be removed by `Backspace`/`Clear`.
 
+## Menu
+- A top-level in-game menu is available from a menu button.
+- Menu actions include:
+- `Pause/Resume`: toggles gameplay/timer progression.
+- `Help`: opens a popup with quick gameplay instructions and power-up descriptions.
+- `Restart Round`: resets round state and opens language selection before round start.
+- `New Game`: starts a fresh game session from zero and opens language selection before round start.
+- While paused, gameplay interactions are disabled until resume.
+
+## Help Popup
+- Help is shown as a modal popup opened from the in-game menu.
+- Popup includes a brief "how to play" section.
+- Popup lists all power-ups with icon/label and effect description.
+- Help content is localized with the currently selected game language.
+
 ## Word Validation
 - Submitted word must be at least `4` characters.
-- Validation is performed against an English dictionary API.
-- If API is unavailable, a small local fallback dictionary is used.
+- Validation is performed against a dictionary API using the selected language locale.
+- If API is unavailable, a small language-specific fallback dictionary is used.
 - Wildcard words are evaluated by trying dictionary-valid substitutions.
 - Invalid words do not score and tray remains unchanged.
 
 ## Scoring
-- Each letter uses standard Scrabble point values.
+- Each letter uses language-specific Scrabble-like point values.
 - Word score is sum of tray letter values at submit time.
 - Wildcard tile value is `0`.
 - If `DW` is active, next valid word score is doubled.
@@ -73,7 +88,9 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Show time remaining in seconds.
 - Show active and target letter counts.
 - Show active effect states/timers.
+- Effects panel is shown in the right-side control column and remains mounted to avoid board layout jumps.
 - Show status messages for game events and validation.
+- Status message is displayed directly below the game board.
 - Show tray word and computed points.
 - Show accepted words list with points.
 - On desktop, controls/tray are to the right of the square.
@@ -84,6 +101,19 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Application source code lives under `src/`.
 - Run locally with `pnpm run dev` (`127.0.0.1:5173`, strict port).
 - Production build output directory is `build/`.
+
+## Localization
+- UI supports 5 languages: English (default), German, French, Italian, Russian.
+- Language is selectable only via startup modal before a round begins.
+- Round duration is selectable in the same startup modal with exactly 3 options (`60s`, `90s`, `120s`).
+- The language modal appears:
+- on initial app load,
+- after `Restart Round`,
+- after `New Game`.
+- Round starts only after user confirms selection in the modal.
+- UI labels, controls, status messages, and power-up descriptions are localized.
+- Dictionary validation requests use the currently selected language locale.
+- Word generation and wildcard substitution also use the currently selected language alphabet.
 
 ## Current Non-Goals
 - No multiplayer.

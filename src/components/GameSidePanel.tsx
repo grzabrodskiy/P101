@@ -9,11 +9,26 @@ type GameSidePanelProps = {
   isRunning: boolean;
   isRefreshing: boolean;
   isShieldActive: boolean;
+  activeEffects: string[];
   submittedWords: SubmittedWord[];
   onSubmitWord: () => void;
   onBackspace: () => void;
   onClear: () => void;
   onRestart: () => void;
+  labels: {
+    trayPlaceholder: string;
+    wordPoints: string;
+    submitWord: string;
+    checking: string;
+    backspace: string;
+    clear: string;
+    restartRound: string;
+    playAgain: string;
+    acceptedWords: string;
+    noneYet: string;
+    effects: string;
+    noEffects: string;
+  };
 };
 
 export function GameSidePanel({
@@ -25,17 +40,19 @@ export function GameSidePanel({
   isRunning,
   isRefreshing,
   isShieldActive,
+  activeEffects,
   submittedWords,
   onSubmitWord,
   onBackspace,
   onClear,
-  onRestart
+  onRestart,
+  labels
 }: GameSidePanelProps) {
   return (
     <section className="sidePanel">
       <section className="tray" aria-label="Word builder">
-        <div className="trayWord">{trayWord || "Tap letters to build a word"}</div>
-        <div className="trayScore">Word Points: {trayScore}</div>
+        <div className="trayWord">{trayWord || labels.trayPlaceholder}</div>
+        <div className="trayScore">{labels.wordPoints}: {trayScore}</div>
       </section>
 
       <section className="controls">
@@ -44,32 +61,36 @@ export function GameSidePanel({
           onClick={onSubmitWord}
           disabled={submitDisabled}
         >
-          {isChecking ? "Checking..." : "Submit Word"}
+          {isChecking ? labels.checking : labels.submitWord}
         </button>
         <button
           type="button"
           onClick={onBackspace}
           disabled={tray.length === 0 || !isRunning || isRefreshing || isShieldActive}
         >
-          Backspace
+          {labels.backspace}
         </button>
         <button
           type="button"
           onClick={onClear}
           disabled={tray.length === 0 || !isRunning || isRefreshing || isShieldActive}
         >
-          Clear
+          {labels.clear}
         </button>
       </section>
 
       <button type="button" className="restartButton" onClick={onRestart}>
-        {isRunning ? "Restart Round" : "Play Again"}
+        {isRunning ? labels.restartRound : labels.playAgain}
       </button>
 
+      <section className="effects effectsInPanel">
+        {labels.effects}: {activeEffects.length > 0 ? activeEffects.join(" · ") : labels.noEffects}
+      </section>
+
       <section className="submitted">
-        <h2>Accepted Words</h2>
+        <h2>{labels.acceptedWords}</h2>
         {submittedWords.length === 0 ? (
-          <p className="empty">None yet</p>
+          <p className="empty">{labels.noneYet}</p>
         ) : (
           <ul>
             {submittedWords

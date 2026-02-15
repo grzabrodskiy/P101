@@ -3,20 +3,31 @@ type GameHudProps = {
   timeLeft: number;
   letterCount: number;
   targetCount: number;
-  activeEffects: string[];
+  languageLabel: string;
+  labels: {
+    totalScore: string;
+    timeLeft: string;
+    flyingLetters: string;
+    target: string;
+    language: string;
+  };
 };
 
-export function GameHud({ score, timeLeft, letterCount, targetCount, activeEffects }: GameHudProps) {
+export function GameHud({
+  score,
+  timeLeft,
+  letterCount,
+  targetCount,
+  languageLabel,
+  labels
+}: GameHudProps) {
   return (
-    <>
-      <section className="hud">
-        <span>Total Score: {score}</span>
-        <span>Time Left: {timeLeft}s</span>
-        <span>Flying Letters: {letterCount}</span>
-        <span>Target: {targetCount}</span>
-      </section>
-
-      {activeEffects.length > 0 && <p className="effects">Effects: {activeEffects.join(" · ")}</p>}
-    </>
+    <section className="hud">
+      <span>{labels.totalScore}: {score}</span>
+      <span>{labels.timeLeft}: {timeLeft}s</span>
+      <span>{labels.flyingLetters}: {letterCount}</span>
+      <span>{labels.target}: {targetCount}</span>
+      <span>{labels.language}: {languageLabel}</span>
+    </section>
   );
 }

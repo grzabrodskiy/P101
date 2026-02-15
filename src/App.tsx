@@ -9,7 +9,11 @@ import {
 
 import { GameField } from "./components/GameField";
 import { GameHud } from "./components/GameHud";
+import { HelpModal } from "./components/HelpModal";
+import { LanguageModal } from "./components/LanguageModal";
+import { GameMenu } from "./components/GameMenu";
 import { GameSidePanel } from "./components/GameSidePanel";
+import { dictionaryLocale, LANGUAGE_OPTIONS, type LanguageCode, UI_TEXT } from "./game/i18n";
 import {
   BASE_TILE_COUNT,
   EXPLOSION_MS,
@@ -17,6 +21,9 @@ import {
   POWERUP_SIZE,
   POWERUP_META,
   POWERUP_RESPAWN_MS,
+  POWERUP_TYPES,
+  ROUND_DURATION_OPTIONS,
+  type RoundDurationSeconds,
   REFRESH_SPAWN_MS,
   ROUND_SECONDS,
   TILE_SIZE
@@ -28,7 +35,7 @@ import {
   updateMovingEntity,
   wildcardCandidates
 } from "./game/logic";
-import type { Letter, PowerUp, SubmittedWord, Tile, TrayTile } from "./game/types";
+import type { Letter, PowerUp, PowerUpKind, SubmittedWord, Tile, TrayTile } from "./game/types";
 
 function stopEvent(event: SyntheticEvent) {
   event.preventDefault();
@@ -44,18 +51,28 @@ export default function App() {
   const validateSeqRef = useRef(0);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
-    Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++))
+    Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, "en"))
   );
   const [tray, setTray] = useState<TrayTile[]>([]);
   const [score, setScore] = useState(0);
-  const [status, setStatus] = useState("Tap flying letters to build a word.");
+  const [language, setLanguage] = useState<LanguageCode>("en");
+  const [pendingLanguage, setPendingLanguage] = useState<LanguageCode>("en");
+  const [roundSeconds, setRoundSeconds] = useState<RoundDurationSeconds>(ROUND_SECONDS);
+  const [pendingRoundSeconds, setPendingRoundSeconds] = useState<RoundDurationSeconds>(ROUND_SECONDS);
+  const t = UI_TEXT[language];
+  const pendingText = UI_TEXT[pendingLanguage];
+  const [status, setStatus] = useState(t.initialStatus);
   const [submittedWords, setSubmittedWords] = useState<SubmittedWord[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [wordValidation, setWordValidation] = useState<"too-short" | "checking" | "valid" | "invalid">(
     "too-short"
   );
   const [timeLeft, setTimeLeft] = useState(ROUND_SECONDS);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(true);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   const [powerUp, setPowerUp] = useState<PowerUp | null>(() => makePowerUp(idRef.current++, "bomb"));
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -78,6 +95,25 @@ export default function App() {
   const isDoubleWordReady = doubleWordLeft > 0;
 
   const activeTileTarget = isMultiplierActive ? BASE_TILE_COUNT * 2 : BASE_TILE_COUNT;
+  const powerUpLabelByKind = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(POWERUP_META).map(([kind, meta]) => [kind, meta.label])
+      ) as Record<PowerUpKind, string>,
+    []
+  );
+
+  useEffect(() => {
+    setStatus(t.initialStatus);
+  }, [language]);
+
+  useEffect(() => {
+    setPendingLanguage(language);
+  }, [language]);
+
+  useEffect(() => {
+    setPendingRoundSeconds(roundSeconds);
+  }, [roundSeconds]);
 
   useEffect(() => {
     const loop = (now: number) => {
@@ -85,7 +121,7 @@ export default function App() {
       const dtBase = Math.min(0.05, (now - tickRef.current) / 1000);
       tickRef.current = now;
 
-      if (!isRunning) {
+      if (!isRunning || isPaused) {
         frameRef.current = requestAnimationFrame(loop);
         return;
       }
@@ -117,7 +153,7 @@ export default function App() {
           .filter((value): value is Tile => value !== null);
 
         while (!isRefreshing && nextTiles.length < activeTileTarget) {
-          nextTiles.push(makeTile(idRef.current++));
+          nextTiles.push(makeTile(idRef.current++, language));
         }
 
         return nextTiles;
@@ -146,15 +182,15 @@ export default function App() {
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [isRunning, isRefreshing, activeTileTarget, isFrozen, isSlowActive, isMagnetActive]);
+  }, [isRunning, isPaused, isRefreshing, activeTileTarget, isFrozen, isSlowActive, isMagnetActive]);
 
   useEffect(() => {
-    if (!isRunning) return undefined;
+    if (!isRunning || isPaused) return undefined;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           setIsRunning(false);
-          setStatus("Time is up. Submit again after restart.");
+          setStatus(t.timeUpStatus);
           return 0;
         }
         return prev - 1;
@@ -175,14 +211,14 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, isPaused, t.timeUpStatus]);
 
   useEffect(() => {
     if (!isRunning || !isRefreshing) return undefined;
     const interval = setInterval(() => {
       setTiles((prev) => {
         if (prev.length >= activeTileTarget) return prev;
-        return [...prev, makeTile(idRef.current++)];
+        return [...prev, makeTile(idRef.current++, language)];
       });
     }, REFRESH_SPAWN_MS);
     return () => clearInterval(interval);
@@ -192,8 +228,8 @@ export default function App() {
     if (!isRefreshing || tiles.length < activeTileTarget) return;
     setIsRefreshing(false);
     powerUpRespawnAtRef.current = performance.now() + 250;
-    setStatus("Bomb refresh complete.");
-  }, [isRefreshing, tiles.length, activeTileTarget]);
+    setStatus(t.bombRefreshComplete);
+  }, [isRefreshing, tiles.length, activeTileTarget, t.bombRefreshComplete]);
 
   useEffect(() => {
     if (!explosionPulse) return undefined;
@@ -203,7 +239,7 @@ export default function App() {
 
   const trayWord = useMemo(() => tray.map((tile) => tile.char).join(""), [tray]);
   const trayScore = useMemo(() => tray.reduce((sum, tile) => sum + tile.value, 0), [tray]);
-  const canSubmit = isRunning && !isRefreshing && !isChecking && wordValidation === "valid";
+  const canSubmit = isRunning && !isPaused && !isRefreshing && !isChecking && wordValidation === "valid";
 
   useEffect(() => {
     if (!isRunning || isRefreshing || tray.length < 4) {
@@ -221,7 +257,7 @@ export default function App() {
     }, 220);
 
     return () => clearTimeout(timeout);
-  }, [tray, isRunning, isRefreshing]);
+  }, [tray, isRunning, isRefreshing, language]);
 
   const activeEffects = useMemo(() => {
     const effects: string[] = [];
@@ -251,7 +287,7 @@ export default function App() {
   ]);
 
   function collectTile(tileId: number) {
-    if (!isRunning || isRefreshing) return;
+    if (!isRunning || isPaused || isRefreshing) return;
     const shouldLock = lockLetterCharges > 0;
 
     setTiles((prev) => {
@@ -274,18 +310,18 @@ export default function App() {
 
       const nextTiles = prev.filter((tile) => tile.id !== tileId);
       if (nextTiles.length < activeTileTarget) {
-        nextTiles.push(makeTile(idRef.current++));
+        nextTiles.push(makeTile(idRef.current++, language));
       }
       return nextTiles;
     });
   }
 
   async function resolveSubmittedWord(chars: Array<Letter | "*">): Promise<string | null> {
-    const candidates = wildcardCandidates(chars);
+    const candidates = wildcardCandidates(chars, language);
     if (candidates.length === 0) return null;
 
     for (const candidate of candidates) {
-      const isValid = await isRealWord(candidate.toLowerCase());
+      const isValid = await isRealWord(candidate.toLowerCase(), dictionaryLocale(language));
       if (isValid) return candidate;
     }
 
@@ -293,25 +329,25 @@ export default function App() {
   }
 
   async function submitWord() {
-    if (isChecking || !isRunning || isRefreshing) return;
+    if (isChecking || !isRunning || isPaused || isRefreshing) return;
     if (tray.length < 4) {
-      setStatus("Word must have at least 4 letters.");
+      setStatus(t.wordMin4);
       return;
     }
     if (wordValidation !== "valid") {
-      setStatus("Current tray is not a valid word.");
+      setStatus(t.trayInvalid);
       return;
     }
 
     const chars = tray.map((tile) => tile.char);
 
     setIsChecking(true);
-    setStatus(`Checking "${chars.join("").toLowerCase()}"...`);
+    setStatus(t.statusChecking(chars.join("").toLowerCase()));
     const resolvedWord = await resolveSubmittedWord(chars);
     setIsChecking(false);
 
     if (!resolvedWord) {
-      setStatus("No valid dictionary word for this letter set.");
+      setStatus(t.noValidWord);
       return;
     }
 
@@ -324,13 +360,16 @@ export default function App() {
     }
 
     setScore((prev) => prev + awardedPoints);
-    setSubmittedWords((prev) => [...prev, { word: resolvedWord.toUpperCase(), points: awardedPoints }]);
+    setSubmittedWords((prev) => [
+      ...prev,
+      { word: resolvedWord.toLocaleUpperCase(language), points: awardedPoints }
+    ]);
     setTray([]);
-    setStatus(`Great word: ${resolvedWord.toUpperCase()} (+${awardedPoints})${messageSuffix}`);
+    setStatus(t.statusGreatWord(resolvedWord.toLocaleUpperCase(language), awardedPoints, messageSuffix));
   }
 
   function removeLastFromTray() {
-    if (!isRunning || isRefreshing || isShieldActive) return;
+    if (!isRunning || isPaused || isRefreshing || isShieldActive) return;
 
     setTray((prev) => {
       for (let index = prev.length - 1; index >= 0; index -= 1) {
@@ -343,7 +382,7 @@ export default function App() {
   }
 
   function clearTray() {
-    if (!isRunning || isRefreshing || isShieldActive) return;
+    if (!isRunning || isPaused || isRefreshing || isShieldActive) return;
     setTray((prev) => prev.filter((tile) => tile.locked));
   }
 
@@ -351,14 +390,14 @@ export default function App() {
     setTiles((prev) =>
       prev.map((tile) => {
         if (!predicate(tile)) return tile;
-        return makeTile(idRef.current++);
+        return makeTile(idRef.current++, language);
       })
     );
   }
 
   function activatePowerUp(event: SyntheticEvent) {
     stopEvent(event);
-    if (!isRunning || isRefreshing || !powerUp) return;
+    if (!isRunning || isPaused || isRefreshing || !powerUp) return;
 
     const { kind } = powerUp;
     setPowerUp(null);
@@ -369,25 +408,25 @@ export default function App() {
       setTiles([]);
       setIsRefreshing(true);
       setExplosionPulse(true);
-      setStatus("Bomb triggered. Refreshing letters...");
+      setStatus(t.powerUpActivated.bomb);
       return;
     }
 
     if (kind === "multiplier") {
       setMultiplierLeft(capDuration(POWERUP_META.multiplier.durationSeconds ?? 12));
-      setStatus("x2 activated.");
+      setStatus(t.powerUpActivated.multiplier);
       return;
     }
 
     if (kind === "freeze") {
       setFreezeLeft(capDuration(POWERUP_META.freeze.durationSeconds ?? 5));
-      setStatus("Freeze activated.");
+      setStatus(t.powerUpActivated.freeze);
       return;
     }
 
     if (kind === "shield") {
       setShieldLeft(capDuration(POWERUP_META.shield.durationSeconds ?? 10));
-      setStatus("Shield activated.");
+      setStatus(t.powerUpActivated.shield);
       return;
     }
 
@@ -396,64 +435,63 @@ export default function App() {
         ...prev,
         { id: idRef.current++, char: "*", value: 0, wildcard: true }
       ]);
-      setStatus("Wildcard added to tray.");
+      setStatus(t.powerUpActivated.wild);
       return;
     }
 
     if (kind === "reroll") {
       replaceTilesByPredicate((tile) => tile.value === 1);
-      setStatus("Rerolled low-value letters.");
+      setStatus(t.powerUpActivated.reroll);
       return;
     }
 
     if (kind === "slow") {
       setSlowLeft(capDuration(POWERUP_META.slow.durationSeconds ?? 8));
-      setStatus("Slow Time activated.");
+      setStatus(t.powerUpActivated.slow);
       return;
     }
 
     if (kind === "double") {
       setDoubleWordLeft(MAX_EFFECT_SECONDS);
-      setStatus("Double Word ready for next valid submit.");
+      setStatus(t.powerUpActivated.double);
       return;
     }
 
     if (kind === "magnet") {
       setMagnetLeft(capDuration(POWERUP_META.magnet.durationSeconds ?? 8));
-      setStatus("Magnet activated.");
+      setStatus(t.powerUpActivated.magnet);
       return;
     }
 
     if (kind === "extra-time") {
       setTimeLeft((prev) => prev + 10);
-      setStatus("+10 seconds added.");
+      setStatus(t.powerUpActivated["extra-time"]);
       return;
     }
 
     if (kind === "lock") {
       setLockLetterCharges((prev) => prev + 1);
       setLockLeft(MAX_EFFECT_SECONDS);
-      setStatus("Lock charge added to next collected letter.");
+      setStatus(t.powerUpActivated.lock);
       return;
     }
 
     replaceTilesByPredicate((tile) => tile.value >= 8);
-    setStatus("Purged rare letters.");
+    setStatus(t.powerUpActivated.purge);
   }
 
-  function restartGame() {
+  function restartRound() {
     idRef.current = 1;
     tickRef.current = 0;
     powerUpRespawnAtRef.current = 0;
     pointerRef.current = null;
 
-    setTiles(Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++)));
+    setTiles(Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, pendingLanguage)));
     setTray([]);
-    setScore(0);
-    setSubmittedWords([]);
     setIsChecking(false);
-    setTimeLeft(ROUND_SECONDS);
-    setIsRunning(true);
+    setTimeLeft(pendingRoundSeconds);
+    setIsRunning(false);
+    setIsPaused(true);
     setPowerUp(makePowerUp(idRef.current++, "bomb"));
     setIsRefreshing(false);
     setExplosionPulse(false);
@@ -467,7 +505,40 @@ export default function App() {
     setLockLetterCharges(0);
     setLockLeft(0);
 
-    setStatus("Tap flying letters to build a word.");
+    setStatus(UI_TEXT[pendingLanguage].initialStatus);
+    setIsLanguageModalOpen(true);
+    setIsMenuOpen(false);
+    setIsHelpModalOpen(false);
+  }
+
+  function startNewGame() {
+    restartRound();
+    setScore(0);
+    setSubmittedWords([]);
+  }
+
+  function confirmLanguageAndStartRound() {
+    idRef.current = 1;
+    setTiles(Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, pendingLanguage)));
+    setPowerUp(makePowerUp(idRef.current++, "bomb"));
+    setTray([]);
+    setIsChecking(false);
+    setLanguage(pendingLanguage);
+    setRoundSeconds(pendingRoundSeconds);
+    setTimeLeft(pendingRoundSeconds);
+    setIsLanguageModalOpen(false);
+    setIsRunning(true);
+    setIsPaused(false);
+    setStatus(UI_TEXT[pendingLanguage].initialStatus);
+  }
+
+  function togglePauseResume() {
+    if (!isRunning || isLanguageModalOpen) return;
+    setIsPaused((prev) => {
+      const next = !prev;
+      setStatus(next ? t.pausedStatus : t.initialStatus);
+      return next;
+    });
   }
 
   function handleFieldPointerMove(event: ReactPointerEvent<HTMLElement>) {
@@ -484,45 +555,138 @@ export default function App() {
 
   return (
     <main className="app">
-      <h1>Scrabble Bounce</h1>
-      <p className="status">{status}</p>
-
-      <GameHud
-        score={score}
-        timeLeft={timeLeft}
-        letterCount={tiles.length}
-        targetCount={activeTileTarget}
-        activeEffects={activeEffects}
+      <LanguageModal
+        isOpen={isLanguageModalOpen}
+        selectedLanguage={pendingLanguage}
+        selectedDuration={pendingRoundSeconds}
+        options={LANGUAGE_OPTIONS}
+        durationOptions={ROUND_DURATION_OPTIONS.map((seconds) => ({
+          seconds,
+          label: `${pendingText.roundDurationOptionLabel(seconds)} (${seconds}s)`
+        }))}
+        onLanguageChange={setPendingLanguage}
+        onDurationChange={setPendingRoundSeconds}
+        onStartRound={confirmLanguageAndStartRound}
+        labels={{
+          title: pendingText.languageSetupTitle,
+          language: pendingText.language,
+          duration: pendingText.roundDuration,
+          startRound: pendingText.startRound
+        }}
+      />
+      <HelpModal
+        isOpen={isHelpModalOpen}
+        powerUpOrder={POWERUP_TYPES}
+        powerUpLabelByKind={powerUpLabelByKind}
+        powerUpHelpByKind={t.powerUpHelp}
+        onClose={() => setIsHelpModalOpen(false)}
+        labels={{
+          title: t.helpTitle,
+          howToTitle: t.helpHowToTitle,
+          lineBuildWords: t.helpLineBuildWords,
+          lineTapLetters: t.helpLineTapLetters,
+          lineSubmitValid: t.helpLineSubmitValid,
+          linePowerUps: t.helpLinePowerUps,
+          powerUpsTitle: t.helpPowerUpsTitle,
+          close: t.closeHelp
+        }}
       />
 
-      <section className="gameLayout">
-        <GameField
-          tiles={tiles}
-          powerUp={powerUp}
-          isRunning={isRunning}
-          isRefreshing={isRefreshing}
-          explosionPulse={explosionPulse}
-          onCollectTile={collectTile}
-          onActivatePowerUp={activatePowerUp}
-          onPointerMove={handleFieldPointerMove}
-          onPointerLeave={handleFieldPointerLeave}
+      <section className="topBar">
+        <h1>{t.title}</h1>
+        <GameMenu
+          isOpen={isMenuOpen}
+          isPaused={isPaused}
+          isRunning={isRunning && !isLanguageModalOpen}
+          onToggle={() => setIsMenuOpen((prev) => !prev)}
+          onPauseResume={togglePauseResume}
+          onOpenHelp={() => {
+            setIsHelpModalOpen(true);
+            setIsMenuOpen(false);
+          }}
+          onRestartRound={() => {
+            restartRound();
+            setIsMenuOpen(false);
+          }}
+          onNewGame={startNewGame}
+          labels={{
+            menuButton: t.menuButton,
+            menuTitle: t.menuTitle,
+            help: t.help,
+            pause: t.pause,
+            resume: t.resume,
+            restartRound: t.restartRound,
+            newGame: t.newGame,
+            closeMenu: t.closeMenu
+          }}
         />
+      </section>
 
-        <GameSidePanel
-          tray={tray}
-          trayWord={trayWord}
-          trayScore={trayScore}
-          isChecking={isChecking}
-          submitDisabled={!canSubmit}
-          isRunning={isRunning}
-          isRefreshing={isRefreshing}
-          isShieldActive={isShieldActive}
-          submittedWords={submittedWords}
-          onSubmitWord={submitWord}
-          onBackspace={removeLastFromTray}
-          onClear={clearTray}
-          onRestart={restartGame}
-        />
+      <section className="gameLayout">
+        <section className="boardColumn">
+          <GameField
+            tiles={tiles}
+            powerUp={powerUp}
+            isRunning={isRunning}
+            isRefreshing={isRefreshing || isPaused}
+            explosionPulse={explosionPulse}
+            onCollectTile={collectTile}
+            onActivatePowerUp={activatePowerUp}
+            onPointerMove={handleFieldPointerMove}
+            onPointerLeave={handleFieldPointerLeave}
+            powerUpHelpByKind={t.powerUpHelp}
+            powerUpLabelByKind={powerUpLabelByKind}
+          />
+          <p className="status statusUnderBoard">{status}</p>
+        </section>
+
+        <section className="rightColumn">
+          <GameHud
+            score={score}
+            timeLeft={timeLeft}
+            letterCount={tiles.length}
+            targetCount={activeTileTarget}
+            languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
+            labels={{
+              totalScore: t.totalScore,
+              timeLeft: t.timeLeft,
+              flyingLetters: t.flyingLetters,
+              target: t.target,
+              language: t.language
+            }}
+          />
+
+          <GameSidePanel
+            tray={tray}
+            trayWord={trayWord}
+            trayScore={trayScore}
+            isChecking={isChecking}
+            submitDisabled={!canSubmit}
+            isRunning={isRunning}
+            isRefreshing={isRefreshing || isPaused}
+            isShieldActive={isShieldActive}
+            activeEffects={activeEffects}
+            submittedWords={submittedWords}
+            onSubmitWord={submitWord}
+            onBackspace={removeLastFromTray}
+            onClear={clearTray}
+            onRestart={restartRound}
+            labels={{
+              trayPlaceholder: t.trayPlaceholder,
+              wordPoints: t.wordPoints,
+              submitWord: t.submitWord,
+              checking: t.checking,
+              backspace: t.backspace,
+              clear: t.clear,
+              restartRound: t.restartRound,
+              playAgain: t.playAgain,
+              acceptedWords: t.acceptedWords,
+              noneYet: t.noneYet,
+              effects: t.effects,
+              noEffects: t.noEffects
+            }}
+          />
+        </section>
       </section>
     </main>
   );
