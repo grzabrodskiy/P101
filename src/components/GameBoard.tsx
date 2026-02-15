@@ -13,7 +13,6 @@ import {
   MAX_EFFECT_SECONDS,
   POWERUP_SIZE,
   POWERUP_META,
-  POWERUP_RESPAWN_MS,
   POWERUP_TYPES,
   REFRESH_SPAWN_MS,
   TILE_SIZE,
@@ -42,6 +41,7 @@ type GameBoardProps = {
   baseTileCount: BaseTileCount;
   speedMultiplier: SpeedMultiplier;
   maxBounces: MaxBounces;
+  powerUpRespawnMs: number;
   onOpenOptions: () => void;
 };
 
@@ -51,6 +51,7 @@ export function GameBoard({
   baseTileCount,
   speedMultiplier,
   maxBounces,
+  powerUpRespawnMs,
   onOpenOptions
 }: GameBoardProps) {
   const t = UI_TEXT[language];
@@ -150,7 +151,7 @@ export function GameBoard({
       return;
     }
     resetRoundState(true);
-  }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces]);
+  }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs]);
 
   useEffect(() => {
     const loop = (now: number) => {
@@ -206,7 +207,7 @@ export function GameBoard({
 
         const moved = updateMovingEntity(prevPowerUp, POWERUP_SIZE, dt, maxBounces);
         if (!moved) {
-          powerUpRespawnAtRef.current = now + POWERUP_RESPAWN_MS;
+          powerUpRespawnAtRef.current = now + powerUpRespawnMs;
           return null;
         }
         return moved;
@@ -228,6 +229,7 @@ export function GameBoard({
     isSlowActive,
     isMagnetActive,
     maxBounces,
+    powerUpRespawnMs,
     speedMultiplier,
     language
   ]);
@@ -456,7 +458,7 @@ export function GameBoard({
 
     const { kind } = powerUp;
     setPowerUp(null);
-    powerUpRespawnAtRef.current = performance.now() + POWERUP_RESPAWN_MS;
+    powerUpRespawnAtRef.current = performance.now() + powerUpRespawnMs;
     const capDuration = (seconds: number) => Math.min(seconds, MAX_EFFECT_SECONDS);
 
     if (kind === "bomb") {

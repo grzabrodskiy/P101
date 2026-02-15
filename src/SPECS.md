@@ -68,12 +68,15 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Options
 - Options are managed in a popup opened from the menu.
+- Difficulty presets are available: `Casual`, `Standard`, `Chaos`.
 - Options include:
 - language (`English`, `German`, `French`, `Italian`, `Russian`),
 - round duration (`60s`, `90s`, `120s`),
 - base letters on screen (`6`, `8`, `10`, `12`),
 - speed (`Slow`, `Normal`, `Fast`),
 - max bounces (`2`, `3`, `4`, `5`).
+- Presets update speed, bounce count, base letter count, and power-up respawn cadence together.
+- Manual tuning sets difficulty to `Custom`.
 - Changing any option automatically restarts the game immediately.
 - Automatic restart on options change resets score and accepted words.
 

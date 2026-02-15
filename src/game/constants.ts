@@ -20,6 +20,29 @@ export const REFRESH_SPAWN_MS = 130;
 export const EXPLOSION_MS = 260;
 export const POWERUP_RESPAWN_MS = 1800;
 
+export const DIFFICULTY_PRESETS = {
+  casual: {
+    baseTileCount: 6 as BaseTileCount,
+    speedMultiplier: 0.8 as SpeedMultiplier,
+    maxBounces: 4 as MaxBounces,
+    powerUpRespawnMs: 1200
+  },
+  standard: {
+    baseTileCount: 8 as BaseTileCount,
+    speedMultiplier: 1 as SpeedMultiplier,
+    maxBounces: 3 as MaxBounces,
+    powerUpRespawnMs: POWERUP_RESPAWN_MS
+  },
+  chaos: {
+    baseTileCount: 12 as BaseTileCount,
+    speedMultiplier: 1.25 as SpeedMultiplier,
+    maxBounces: 2 as MaxBounces,
+    powerUpRespawnMs: 900
+  }
+} as const;
+
+export type DifficultyPresetKey = keyof typeof DIFFICULTY_PRESETS;
+
 export const SCRABBLE_VALUES = {
   A: 1,
   B: 3,

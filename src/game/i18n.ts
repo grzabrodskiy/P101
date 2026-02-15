@@ -49,6 +49,11 @@ type Translations = {
   speed: string;
   bounces: string;
   speedOptionLabel: (value: SpeedMultiplier) => string;
+  difficulty: string;
+  presetCasual: string;
+  presetStandard: string;
+  presetChaos: string;
+  presetCustom: string;
   startRound: string;
   menuButton: string;
   menuTitle: string;
@@ -114,6 +119,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     speed: "Speed",
     bounces: "Bounces",
     speedOptionLabel: (value) => ({ 0.8: "Slow", 1: "Normal", 1.25: "Fast" })[value],
+    difficulty: "Difficulty",
+    presetCasual: "Casual",
+    presetStandard: "Standard",
+    presetChaos: "Chaos",
+    presetCustom: "Custom",
     startRound: "Start Round",
     menuButton: "Menu",
     menuTitle: "Game Menu",
@@ -203,6 +213,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     speed: "Tempo",
     bounces: "Abpraller",
     speedOptionLabel: (value) => ({ 0.8: "Langsam", 1: "Normal", 1.25: "Schnell" })[value],
+    difficulty: "Schwierigkeit",
+    presetCasual: "Locker",
+    presetStandard: "Standard",
+    presetChaos: "Chaos",
+    presetCustom: "Benutzerdefiniert",
     startRound: "Runde starten",
     menuButton: "Menü",
     menuTitle: "Spielmenü",
@@ -292,6 +307,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     speed: "Vitesse",
     bounces: "Rebonds",
     speedOptionLabel: (value) => ({ 0.8: "Lent", 1: "Normal", 1.25: "Rapide" })[value],
+    difficulty: "Difficulte",
+    presetCasual: "Detente",
+    presetStandard: "Standard",
+    presetChaos: "Chaos",
+    presetCustom: "Personnalise",
     startRound: "Demarrer le tour",
     menuButton: "Menu",
     menuTitle: "Menu du jeu",
@@ -381,6 +401,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     speed: "Velocita",
     bounces: "Rimbalzi",
     speedOptionLabel: (value) => ({ 0.8: "Lento", 1: "Normale", 1.25: "Veloce" })[value],
+    difficulty: "Difficolta",
+    presetCasual: "Facile",
+    presetStandard: "Standard",
+    presetChaos: "Caos",
+    presetCustom: "Personalizzato",
     startRound: "Avvia round",
     menuButton: "Menu",
     menuTitle: "Menu gioco",
@@ -470,6 +495,11 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     speed: "Скорость",
     bounces: "Отскоки",
     speedOptionLabel: (value) => ({ 0.8: "Медленно", 1: "Нормально", 1.25: "Быстро" })[value],
+    difficulty: "Сложность",
+    presetCasual: "Легко",
+    presetStandard: "Стандарт",
+    presetChaos: "Хаос",
+    presetCustom: "Пользовательская",
     startRound: "Начать раунд",
     menuButton: "Меню",
     menuTitle: "Меню игры",

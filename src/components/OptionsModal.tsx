@@ -1,5 +1,6 @@
 import type {
   BaseTileCount,
+  DifficultyPresetKey,
   MaxBounces,
   RoundDurationSeconds,
   SpeedMultiplier
@@ -13,7 +14,9 @@ type OptionsModalProps = {
   baseTileCount: BaseTileCount;
   speedMultiplier: SpeedMultiplier;
   maxBounces: MaxBounces;
+  difficultyPreset: DifficultyPresetKey | "custom";
   languageOptions: Array<{ code: LanguageCode; label: string }>;
+  difficultyPresetOptions: Array<{ key: DifficultyPresetKey | "custom"; label: string }>;
   durationOptions: Array<{ seconds: RoundDurationSeconds; label: string }>;
   baseTileCountOptions: BaseTileCount[];
   speedMultiplierOptions: SpeedMultiplier[];
@@ -23,9 +26,11 @@ type OptionsModalProps = {
   onBaseTileCountChange: (count: BaseTileCount) => void;
   onSpeedMultiplierChange: (value: SpeedMultiplier) => void;
   onMaxBouncesChange: (value: MaxBounces) => void;
+  onDifficultyPresetChange: (preset: DifficultyPresetKey) => void;
   onClose: () => void;
   labels: {
     title: string;
+    difficulty: string;
     language: string;
     duration: string;
     lettersOnScreen: string;
@@ -43,7 +48,9 @@ export function OptionsModal({
   baseTileCount,
   speedMultiplier,
   maxBounces,
+  difficultyPreset,
   languageOptions,
+  difficultyPresetOptions,
   durationOptions,
   baseTileCountOptions,
   speedMultiplierOptions,
@@ -53,6 +60,7 @@ export function OptionsModal({
   onBaseTileCountChange,
   onSpeedMultiplierChange,
   onMaxBouncesChange,
+  onDifficultyPresetChange,
   onClose,
   labels
 }: OptionsModalProps) {
@@ -69,6 +77,26 @@ export function OptionsModal({
       >
         <h2>{labels.title}</h2>
         <div className="setupTable">
+          <label className="setupLabel" htmlFor="options-difficulty-select">
+            {labels.difficulty}
+          </label>
+          <select
+            id="options-difficulty-select"
+            className="setupSelect"
+            value={difficultyPreset}
+            onChange={(event) => {
+              const selected = event.target.value as DifficultyPresetKey | "custom";
+              if (selected === "custom") return;
+              onDifficultyPresetChange(selected);
+            }}
+          >
+            {difficultyPresetOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
           <label className="setupLabel" htmlFor="options-language-select">
             {labels.language}
           </label>
