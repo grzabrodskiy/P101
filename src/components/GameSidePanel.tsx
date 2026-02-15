@@ -3,6 +3,8 @@ import type { SubmittedWord, TrayTile } from "../game/types";
 type GameSidePanelProps = {
   tray: TrayTile[];
   trayWord: string;
+  trayBaseScore: number;
+  trayLengthBonus: number;
   trayScore: number;
   isChecking: boolean;
   submitDisabled: boolean;
@@ -34,6 +36,8 @@ type GameSidePanelProps = {
 export function GameSidePanel({
   tray,
   trayWord,
+  trayBaseScore,
+  trayLengthBonus,
   trayScore,
   isChecking,
   submitDisabled,
@@ -52,7 +56,12 @@ export function GameSidePanel({
     <section className="sidePanel">
       <section className="tray" aria-label="Word builder">
         <div className="trayWord">{trayWord || labels.trayPlaceholder}</div>
-        <div className="trayScore">{labels.wordPoints}: {trayScore}</div>
+        <div className="trayScore">
+          {labels.wordPoints}: {trayScore}
+          {trayLengthBonus > 0 ? (
+            <span className="trayScoreDetails"> ({trayBaseScore}+{trayLengthBonus})</span>
+          ) : null}
+        </div>
       </section>
 
       <section className="controls">

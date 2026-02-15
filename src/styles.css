@@ -562,6 +562,11 @@ h1 {
   color: #4b5563;
 }
 
+.trayScoreDetails {
+  font-size: 0.9em;
+  color: #6b7280;
+}
+
 .controls {
   width: 100%;
   display: grid;

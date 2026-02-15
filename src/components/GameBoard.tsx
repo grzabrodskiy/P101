@@ -49,6 +49,11 @@ function rollGoalConfig(round: number): RoundGoalConfig {
   };
 }
 
+function wordLengthBonus(length: number): number {
+  if (length <= 4) return 0;
+  return 2 ** (length - 4);
+}
+
 type GameBoardProps = {
   language: LanguageCode;
   roundSeconds: RoundDurationSeconds;
@@ -364,7 +369,9 @@ export function GameBoard({
   }, [explosionPulse]);
 
   const trayWord = useMemo(() => tray.map((tile) => tile.char).join(""), [tray]);
-  const trayScore = useMemo(() => tray.reduce((sum, tile) => sum + tile.value, 0), [tray]);
+  const trayBaseScore = useMemo(() => tray.reduce((sum, tile) => sum + tile.value, 0), [tray]);
+  const trayLengthBonus = useMemo(() => wordLengthBonus(tray.length), [tray.length]);
+  const trayScore = useMemo(() => trayBaseScore + trayLengthBonus, [trayBaseScore, trayLengthBonus]);
   const canSubmit = isRunning && !isPaused && !isRefreshing && !isChecking && wordValidation === "valid";
 
   useEffect(() => {
@@ -484,7 +491,7 @@ export function GameBoard({
       return;
     }
 
-    let awardedPoints = trayScore;
+    let awardedPoints = trayBaseScore + wordLengthBonus(resolvedWord.length);
     let messageSuffix = "";
     if (isDoubleWordReady) {
       awardedPoints *= 2;
@@ -804,6 +811,8 @@ export function GameBoard({
           <GameSidePanel
             tray={tray}
             trayWord={trayWord}
+            trayBaseScore={trayBaseScore}
+            trayLengthBonus={trayLengthBonus}
             trayScore={trayScore}
             isChecking={isChecking}
             submitDisabled={!canSubmit}

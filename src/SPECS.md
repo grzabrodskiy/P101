@@ -106,6 +106,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 ## Scoring
 - Each letter uses language-specific Scrabble-like point values.
 - Word score is sum of tray letter values at submit time.
+- Length bonus is added: `+0` for `4` letters; for `5+`, bonus doubles each extra letter (`+2`, `+4`, `+8`, `+16`, ...).
 - Wildcard tile value is `0`.
 - If `DW` is active, next valid word score is doubled.
 - Combo scoring is active:
