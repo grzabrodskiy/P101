@@ -2,15 +2,14 @@ type GameHudProps = {
   scoreProgress: string;
   timeLeft: number;
   letterCount: number;
-  targetCount: number;
   languageLabel: string;
   roundLabel: string;
   comboLabel: string;
   comboIsPulsing: boolean;
   labels: {
+    score: string;
     timeLeft: string;
     flyingLetters: string;
-    target: string;
     language: string;
     round: string;
     combo: string;
@@ -21,7 +20,6 @@ export function GameHud({
   scoreProgress,
   timeLeft,
   letterCount,
-  targetCount,
   languageLabel,
   roundLabel,
   comboLabel,
@@ -30,15 +28,39 @@ export function GameHud({
 }: GameHudProps) {
   return (
     <section className="hud">
-      <span>{scoreProgress}</span>
-      <span>{labels.timeLeft}: {timeLeft}s</span>
-      <span>{labels.round}: {roundLabel}</span>
-      <span>{labels.flyingLetters}: {letterCount}</span>
-      <span>{labels.target}: {targetCount}</span>
-      <span className={comboIsPulsing ? "hudCombo hudComboPulse" : "hudCombo"}>
-        {labels.combo}: {comboLabel}
-      </span>
-      <span>{labels.language}: {languageLabel}</span>
+      <div className="hudTable">
+        <div className="hudCell">
+          <span className="hudLabel">{labels.score}</span>
+          <span className="hudValue">{scoreProgress}</span>
+        </div>
+
+        <div className="hudCell">
+          <span className="hudLabel">{labels.timeLeft}</span>
+          <span className={timeLeft < 10 ? "hudValue hudTimeLow" : "hudValue"}>{timeLeft}s</span>
+        </div>
+
+        <div className="hudCell">
+          <span className="hudLabel">{labels.round}</span>
+          <span className="hudValue">{roundLabel}</span>
+        </div>
+
+        <div className="hudCell">
+          <span className="hudLabel">{labels.flyingLetters}</span>
+          <span className="hudValue">{letterCount}</span>
+        </div>
+
+        <div className="hudCell">
+          <span className="hudLabel">{labels.combo}</span>
+          <span className={comboIsPulsing ? "hudValue hudCombo hudComboPulse" : "hudValue hudCombo"}>
+            {comboLabel}
+          </span>
+        </div>
+
+        <div className="hudCell">
+          <span className="hudLabel">{labels.language}</span>
+          <span className="hudValue">{languageLabel}</span>
+        </div>
+      </div>
     </section>
   );
 }

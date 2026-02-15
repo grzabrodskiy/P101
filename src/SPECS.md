@@ -119,7 +119,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 ## UI Requirements
 - Show current total score.
 - Show time remaining in seconds.
-- Show active and target letter counts.
+- Show active flying letter count.
 - Show active effect states/timers.
 - Effects panel is shown in the right-side control column and remains mounted to avoid board layout jumps.
 - Active effect names are localized to the selected language.

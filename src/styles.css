@@ -266,10 +266,6 @@ h1 {
 
 .hud {
   width: 100%;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
   font-weight: 700;
   background: #fffbeb;
   border: 2px solid #111827;
@@ -277,8 +273,33 @@ h1 {
   padding: 10px 12px;
 }
 
-.hud span {
-  min-width: 120px;
+.hudTable {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 6px;
+  align-items: center;
+}
+
+.hudCell {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+}
+
+.hudLabel,
+.hudValue {
+  text-align: left;
+}
+
+.hudValue {
+  min-width: 0;
+}
+
+.hudTimeLow {
+  color: #b91c1c;
 }
 
 .hudCombo {

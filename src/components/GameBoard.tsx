@@ -796,14 +796,13 @@ export function GameBoard({
             comboLabel={comboWindowLeft > 0 ? `x${comboMultiplier.toFixed(2)} (${comboWindowLeft}s)` : "x1.00"}
             comboIsPulsing={comboPulse}
             letterCount={tiles.length}
-            targetCount={activeTileTarget}
             languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
             labels={{
+              score: t.totalScore,
               round: t.round,
               combo: t.combo,
               timeLeft: t.timeLeft,
               flyingLetters: t.flyingLetters,
-              target: t.target,
               language: t.language
             }}
           />
