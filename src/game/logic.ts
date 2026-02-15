@@ -1,7 +1,6 @@
 import {
   FALLBACK_WORDS,
   FIELD_SIZE,
-  MAX_BOUNCES,
   POWERUP_SIZE,
   POWERUP_TYPES,
   TILE_SIZE,
@@ -97,8 +96,8 @@ export function randomLetter(language: LanguageCode): { char: Letter; value: num
   return { char: fallback.char, value: fallback.value };
 }
 
-export function randomVelocity(): { vx: number; vy: number } {
-  const speed = 80 + Math.random() * 130;
+export function randomVelocity(speedMultiplier = 1): { vx: number; vy: number } {
+  const speed = (80 + Math.random() * 130) * speedMultiplier;
   const angle = Math.random() * Math.PI * 2;
   return {
     vx: Math.cos(angle) * speed,
@@ -106,9 +105,9 @@ export function randomVelocity(): { vx: number; vy: number } {
   };
 }
 
-export function spawnMovingEntity(id: number, size: number): MovingEntity {
+export function spawnMovingEntity(id: number, size: number, speedMultiplier = 1): MovingEntity {
   const max = FIELD_SIZE - size;
-  const base = randomVelocity();
+  const base = randomVelocity(speedMultiplier);
   const side = Math.floor(Math.random() * 4);
   let x = 0;
   let y = 0;
@@ -145,7 +144,12 @@ export function spawnMovingEntity(id: number, size: number): MovingEntity {
   };
 }
 
-export function updateMovingEntity<T extends MovingEntity>(entity: T, size: number, dt: number): T | null {
+export function updateMovingEntity<T extends MovingEntity>(
+  entity: T,
+  size: number,
+  dt: number,
+  maxBounces: number
+): T | null {
   let { x, y, vx, vy, bounces, state, stateAge } = entity;
   stateAge += dt;
   x += vx * dt;
@@ -170,7 +174,7 @@ export function updateMovingEntity<T extends MovingEntity>(entity: T, size: numb
 
   if (x <= 0) {
     bounces += 1;
-    if (bounces > MAX_BOUNCES) {
+    if (bounces > maxBounces) {
       startedExit = true;
       state = "exiting";
       stateAge = 0;
@@ -182,7 +186,7 @@ export function updateMovingEntity<T extends MovingEntity>(entity: T, size: numb
     }
   } else if (x >= FIELD_SIZE - size) {
     bounces += 1;
-    if (bounces > MAX_BOUNCES) {
+    if (bounces > maxBounces) {
       startedExit = true;
       state = "exiting";
       stateAge = 0;
@@ -197,7 +201,7 @@ export function updateMovingEntity<T extends MovingEntity>(entity: T, size: numb
   if (!startedExit) {
     if (y <= 0) {
       bounces += 1;
-      if (bounces > MAX_BOUNCES) {
+      if (bounces > maxBounces) {
         state = "exiting";
         stateAge = 0;
         y = -2;
@@ -208,7 +212,7 @@ export function updateMovingEntity<T extends MovingEntity>(entity: T, size: numb
       }
     } else if (y >= FIELD_SIZE - size) {
       bounces += 1;
-      if (bounces > MAX_BOUNCES) {
+      if (bounces > maxBounces) {
         state = "exiting";
         stateAge = 0;
         y = FIELD_SIZE - size + 2;
@@ -223,10 +227,10 @@ export function updateMovingEntity<T extends MovingEntity>(entity: T, size: numb
   return { ...entity, x, y, vx, vy, bounces, state, stateAge };
 }
 
-export function makeTile(id: number, language: LanguageCode): Tile {
+export function makeTile(id: number, language: LanguageCode, speedMultiplier = 1): Tile {
   const { char, value } = randomLetter(language);
   return {
-    ...spawnMovingEntity(id, TILE_SIZE),
+    ...spawnMovingEntity(id, TILE_SIZE, speedMultiplier),
     char,
     value
   };
@@ -236,9 +240,9 @@ export function randomPowerUpKind(): PowerUpKind {
   return POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
 }
 
-export function makePowerUp(id: number, kind?: PowerUpKind): PowerUp {
+export function makePowerUp(id: number, kind?: PowerUpKind, speedMultiplier = 1): PowerUp {
   return {
-    ...spawnMovingEntity(id, POWERUP_SIZE),
+    ...spawnMovingEntity(id, POWERUP_SIZE, speedMultiplier),
     kind: kind ?? randomPowerUpKind()
   };
 }

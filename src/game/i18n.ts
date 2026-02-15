@@ -1,4 +1,5 @@
 import type { PowerUpKind } from "./types";
+import type { SpeedMultiplier } from "./constants";
 
 export type LanguageCode = "en" | "de" | "fr" | "it" | "ru";
 
@@ -34,14 +35,26 @@ type Translations = {
   target: string;
   effects: string;
   noEffects: string;
+  effectX2: string;
+  effectFreeze: string;
+  effectShield: string;
+  effectSlow: string;
+  effectMagnet: string;
+  effectDoubleWord: string;
+  effectLock: string;
   language: string;
   languageSetupTitle: string;
   roundDuration: string;
   roundDurationOptionLabel: (seconds: 60 | 90 | 120) => string;
+  speed: string;
+  bounces: string;
+  speedOptionLabel: (value: SpeedMultiplier) => string;
   startRound: string;
   menuButton: string;
   menuTitle: string;
+  options: string;
   help: string;
+  lettersOnScreen: string;
   pause: string;
   resume: string;
   newGame: string;
@@ -86,14 +99,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Target",
     effects: "Effects",
     noEffects: "None",
+    effectX2: "x2",
+    effectFreeze: "Freeze",
+    effectShield: "Shield",
+    effectSlow: "Slow",
+    effectMagnet: "Magnet",
+    effectDoubleWord: "Double Word",
+    effectLock: "Lock",
     language: "Language",
     languageSetupTitle: "Choose language for this round",
     roundDuration: "Round Duration",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Quick", 90: "Standard", 120: "Long" })[seconds],
+    speed: "Speed",
+    bounces: "Bounces",
+    speedOptionLabel: (value) => ({ 0.8: "Slow", 1: "Normal", 1.25: "Fast" })[value],
     startRound: "Start Round",
     menuButton: "Menu",
     menuTitle: "Game Menu",
+    options: "Options",
+    lettersOnScreen: "Letters",
     help: "Help",
     pause: "Pause",
     resume: "Resume",
@@ -163,14 +188,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Ziel",
     effects: "Effekte",
     noEffects: "Keine",
+    effectX2: "x2",
+    effectFreeze: "Einfrieren",
+    effectShield: "Schild",
+    effectSlow: "Zeitlupe",
+    effectMagnet: "Magnet",
+    effectDoubleWord: "Doppelwort",
+    effectLock: "Sperre",
     language: "Sprache",
     languageSetupTitle: "Sprache fur diese Runde auswahlen",
     roundDuration: "Rundendauer",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Kurz", 90: "Standard", 120: "Lang" })[seconds],
+    speed: "Tempo",
+    bounces: "Abpraller",
+    speedOptionLabel: (value) => ({ 0.8: "Langsam", 1: "Normal", 1.25: "Schnell" })[value],
     startRound: "Runde starten",
     menuButton: "Menü",
     menuTitle: "Spielmenü",
+    options: "Optionen",
+    lettersOnScreen: "Buchstaben",
     help: "Hilfe",
     pause: "Pause",
     resume: "Fortsetzen",
@@ -240,14 +277,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Cible",
     effects: "Effets",
     noEffects: "Aucun",
+    effectX2: "x2",
+    effectFreeze: "Gel",
+    effectShield: "Bouclier",
+    effectSlow: "Ralenti",
+    effectMagnet: "Aimant",
+    effectDoubleWord: "Mot double",
+    effectLock: "Verrou",
     language: "Langue",
     languageSetupTitle: "Choisissez la langue pour ce tour",
     roundDuration: "Duree du tour",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Rapide", 90: "Standard", 120: "Long" })[seconds],
+    speed: "Vitesse",
+    bounces: "Rebonds",
+    speedOptionLabel: (value) => ({ 0.8: "Lent", 1: "Normal", 1.25: "Rapide" })[value],
     startRound: "Demarrer le tour",
     menuButton: "Menu",
     menuTitle: "Menu du jeu",
+    options: "Options",
+    lettersOnScreen: "Lettres",
     help: "Aide",
     pause: "Pause",
     resume: "Reprendre",
@@ -317,14 +366,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Obiettivo",
     effects: "Effetti",
     noEffects: "Nessuno",
+    effectX2: "x2",
+    effectFreeze: "Congelamento",
+    effectShield: "Scudo",
+    effectSlow: "Rallentamento",
+    effectMagnet: "Magnete",
+    effectDoubleWord: "Parola doppia",
+    effectLock: "Blocco",
     language: "Lingua",
     languageSetupTitle: "Scegli la lingua per questo round",
     roundDuration: "Durata round",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Veloce", 90: "Standard", 120: "Lungo" })[seconds],
+    speed: "Velocita",
+    bounces: "Rimbalzi",
+    speedOptionLabel: (value) => ({ 0.8: "Lento", 1: "Normale", 1.25: "Veloce" })[value],
     startRound: "Avvia round",
     menuButton: "Menu",
     menuTitle: "Menu gioco",
+    options: "Opzioni",
+    lettersOnScreen: "Lettere",
     help: "Aiuto",
     pause: "Pausa",
     resume: "Riprendi",
@@ -394,14 +455,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Цель",
     effects: "Эффекты",
     noEffects: "Нет",
+    effectX2: "x2",
+    effectFreeze: "Заморозка",
+    effectShield: "Щит",
+    effectSlow: "Замедление",
+    effectMagnet: "Магнит",
+    effectDoubleWord: "Двойное слово",
+    effectLock: "Блок",
     language: "Язык",
     languageSetupTitle: "Выберите язык для раунда",
     roundDuration: "Длительность раунда",
     roundDurationOptionLabel: (seconds) =>
       ({ 60: "Быстрый", 90: "Стандарт", 120: "Длинный" })[seconds],
+    speed: "Скорость",
+    bounces: "Отскоки",
+    speedOptionLabel: (value) => ({ 0.8: "Медленно", 1: "Нормально", 1.25: "Быстро" })[value],
     startRound: "Начать раунд",
     menuButton: "Меню",
     menuTitle: "Меню игры",
+    options: "Опции",
+    lettersOnScreen: "Буквы",
     help: "Помощь",
     pause: "Пауза",
     resume: "Продолжить",

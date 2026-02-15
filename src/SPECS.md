@@ -6,12 +6,13 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 ## Core Gameplay
 - Game field is a square play area.
 - Game runs in timed rounds selected before start: `60s`, `90s`, or `120s` (`90s` default).
-- Base active letter count is `8`.
+- Base active letter count defaults to `8` and is configurable.
 - Letter tiles move continuously with velocity vectors.
 - Letter tiles enter by crossing the boundary from outside the square.
 - On wall collision, a tile is reflected and wall-hit count increments.
-- A tile reflects for the first `3` wall hits.
+- A tile reflects for the configured number of wall hits (default `3`).
 - On the next wall hit, it exits through the boundary and disappears.
+- Base movement speed is configurable in options (`Slow`, `Normal`, `Fast`).
 - Letter spawn frequency is inversely correlated with Scrabble value.
 - Common low-value letters (for example `E`, `T`, `O`) appear more often.
 - High-value letters (for example `Q`, `Z`) appear less often.
@@ -42,8 +43,9 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - `🧹 Purge Rare`: replaces high-value rare letters (`8+` points).
 
 ## Letter Count Rules
-- During active `x2`, target active letters is `16`.
-- When `x2` ends, target returns to `8`.
+- Base active letter count is configurable in options (`6`, `8`, `10`, `12`).
+- During active `x2`, target active letters is `base * 2`.
+- When `x2` ends, target returns to configured base count.
 - If current letter count is above target, extra letters are not force-removed.
 - Count naturally drains back to target via collection/expiration.
 
@@ -58,10 +60,22 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - A top-level in-game menu is available from a menu button.
 - Menu actions include:
 - `Pause/Resume`: toggles gameplay/timer progression.
+- `Options`: opens a popup for game options.
 - `Help`: opens a popup with quick gameplay instructions and power-up descriptions.
-- `Restart Round`: resets round state and opens language selection before round start.
-- `New Game`: starts a fresh game session from zero and opens language selection before round start.
+- `Restart Round`: resets round state with current options.
+- `New Game`: starts a fresh game session from zero with current options.
 - While paused, gameplay interactions are disabled until resume.
+
+## Options
+- Options are managed in a popup opened from the menu.
+- Options include:
+- language (`English`, `German`, `French`, `Italian`, `Russian`),
+- round duration (`60s`, `90s`, `120s`),
+- base letters on screen (`6`, `8`, `10`, `12`),
+- speed (`Slow`, `Normal`, `Fast`),
+- max bounces (`2`, `3`, `4`, `5`).
+- Changing any option automatically restarts the game immediately.
+- Automatic restart on options change resets score and accepted words.
 
 ## Help Popup
 - Help is shown as a modal popup opened from the in-game menu.
@@ -89,6 +103,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Show active and target letter counts.
 - Show active effect states/timers.
 - Effects panel is shown in the right-side control column and remains mounted to avoid board layout jumps.
+- Active effect names are localized to the selected language.
 - Show status messages for game events and validation.
 - Status message is displayed directly below the game board.
 - Show tray word and computed points.
@@ -99,18 +114,14 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 ## Technical Constraints
 - Frontend stack: React + TypeScript + Vite.
 - Application source code lives under `src/`.
+- `App.tsx` should stay thin and orchestration-focused.
+- Core gameplay state/loop logic should live in a dedicated `GameBoard` component.
 - Run locally with `pnpm run dev` (`127.0.0.1:5173`, strict port).
 - Production build output directory is `build/`.
 
 ## Localization
 - UI supports 5 languages: English (default), German, French, Italian, Russian.
-- Language is selectable only via startup modal before a round begins.
-- Round duration is selectable in the same startup modal with exactly 3 options (`60s`, `90s`, `120s`).
-- The language modal appears:
-- on initial app load,
-- after `Restart Round`,
-- after `New Game`.
-- Round starts only after user confirms selection in the modal.
+- Language, duration, speed, and bounce count are configurable in the Options popup.
 - UI labels, controls, status messages, and power-up descriptions are localized.
 - Dictionary validation requests use the currently selected language locale.
 - Word generation and wildcard substitution also use the currently selected language alphabet.

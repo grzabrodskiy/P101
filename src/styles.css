@@ -96,8 +96,8 @@ body {
 }
 
 .helpModal {
-  width: min(560px, calc(100vw - 24px));
-  max-height: min(80vh, 760px);
+  width: min(700px, calc(100vw - 24px));
+  max-height: min(92vh, 900px);
   overflow: auto;
   display: grid;
   gap: 10px;

@@ -4,12 +4,14 @@ type GameMenuProps = {
   isRunning: boolean;
   onToggle: () => void;
   onPauseResume: () => void;
+  onOpenOptions: () => void;
   onOpenHelp: () => void;
   onRestartRound: () => void;
   onNewGame: () => void;
   labels: {
     menuButton: string;
     menuTitle: string;
+    options: string;
     help: string;
     pause: string;
     resume: string;
@@ -25,6 +27,7 @@ export function GameMenu({
   isRunning,
   onToggle,
   onPauseResume,
+  onOpenOptions,
   onOpenHelp,
   onRestartRound,
   onNewGame,
@@ -41,6 +44,9 @@ export function GameMenu({
           <h2>{labels.menuTitle}</h2>
           <button type="button" onClick={onPauseResume} disabled={!isRunning}>
             {isPaused ? labels.resume : labels.pause}
+          </button>
+          <button type="button" onClick={onOpenOptions}>
+            {labels.options}
           </button>
           <button type="button" onClick={onOpenHelp}>
             {labels.help}
