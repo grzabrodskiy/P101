@@ -17,6 +17,7 @@ import {
   REFRESH_SPAWN_MS,
   TILE_SIZE,
   type BaseTileCount,
+  type DifficultyPresetKey,
   type MaxBounces,
   type RoundDurationSeconds,
   type SpeedMultiplier
@@ -35,6 +36,8 @@ function stopEvent(event: SyntheticEvent) {
   event.stopPropagation();
 }
 
+const MATCH_ROUNDS = 3;
+
 type GameBoardProps = {
   language: LanguageCode;
   roundSeconds: RoundDurationSeconds;
@@ -42,6 +45,7 @@ type GameBoardProps = {
   speedMultiplier: SpeedMultiplier;
   maxBounces: MaxBounces;
   powerUpRespawnMs: number;
+  difficultyPreset: DifficultyPresetKey | "custom";
   onOpenOptions: () => void;
 };
 
@@ -52,6 +56,7 @@ export function GameBoard({
   speedMultiplier,
   maxBounces,
   powerUpRespawnMs,
+  difficultyPreset,
   onOpenOptions
 }: GameBoardProps) {
   const t = UI_TEXT[language];
@@ -69,6 +74,7 @@ export function GameBoard({
   );
   const [tray, setTray] = useState<TrayTile[]>([]);
   const [score, setScore] = useState(0);
+  const [currentRound, setCurrentRound] = useState(1);
   const [status, setStatus] = useState(t.initialStatus);
   const [submittedWords, setSubmittedWords] = useState<SubmittedWord[]>([]);
   const [isChecking, setIsChecking] = useState(false);
@@ -80,6 +86,11 @@ export function GameBoard({
   const [isPaused, setIsPaused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isBetweenRounds, setIsBetweenRounds] = useState(false);
+  const [isMatchComplete, setIsMatchComplete] = useState(false);
+  const [roundLongWords, setRoundLongWords] = useState(0);
+  const [roundPowerUps, setRoundPowerUps] = useState(0);
+  const [roundScoreStart, setRoundScoreStart] = useState(0);
 
   const [powerUp, setPowerUp] = useState<PowerUp | null>(() =>
     makePowerUp(idRef.current++, "bomb", speedMultiplier)
@@ -104,6 +115,38 @@ export function GameBoard({
   const isDoubleWordReady = doubleWordLeft > 0;
 
   const activeTileTarget = isMultiplierActive ? baseTileCount * 2 : baseTileCount;
+  const effectivePreset = difficultyPreset === "custom" ? "standard" : difficultyPreset;
+  const goalConfig = useMemo(() => {
+    if (effectivePreset === "casual") {
+      return { score: 30, longWords: 1, minWordLength: 6, powerUps: 1 };
+    }
+    if (effectivePreset === "chaos") {
+      return { score: 60, longWords: 2, minWordLength: 7, powerUps: 3 };
+    }
+    return { score: 45, longWords: 2, minWordLength: 6, powerUps: 2 };
+  }, [effectivePreset]);
+
+  const roundScore = Math.max(0, score - roundScoreStart);
+  const roundGoals = useMemo(
+    () => [
+      {
+        label: t.goalScore(goalConfig.score),
+        detail: `${roundScore}/${goalConfig.score}`,
+        done: roundScore >= goalConfig.score
+      },
+      {
+        label: t.goalLongWords(goalConfig.longWords, goalConfig.minWordLength),
+        detail: `${roundLongWords}/${goalConfig.longWords}`,
+        done: roundLongWords >= goalConfig.longWords
+      },
+      {
+        label: t.goalPowerUps(goalConfig.powerUps),
+        detail: `${roundPowerUps}/${goalConfig.powerUps}`,
+        done: roundPowerUps >= goalConfig.powerUps
+      }
+    ],
+    [goalConfig, roundLongWords, roundPowerUps, roundScore, t]
+  );
   const powerUpLabelByKind = useMemo(
     () =>
       Object.fromEntries(
@@ -113,6 +156,7 @@ export function GameBoard({
   );
 
   function resetRoundState(resetScore: boolean) {
+    const nextScoreStart = resetScore ? 0 : score;
     idRef.current = 1;
     tickRef.current = 0;
     powerUpRespawnAtRef.current = 0;
@@ -120,6 +164,10 @@ export function GameBoard({
 
     setTiles(Array.from({ length: baseTileCount }, () => makeTile(idRef.current++, language, speedMultiplier)));
     setTray([]);
+    setSubmittedWords([]);
+    setRoundLongWords(0);
+    setRoundPowerUps(0);
+    setRoundScoreStart(nextScoreStart);
     setIsChecking(false);
     setTimeLeft(roundSeconds);
     setIsRunning(true);
@@ -139,7 +187,9 @@ export function GameBoard({
 
     if (resetScore) {
       setScore(0);
-      setSubmittedWords([]);
+      setCurrentRound(1);
+      setIsBetweenRounds(false);
+      setIsMatchComplete(false);
     }
 
     setStatus(UI_TEXT[language].initialStatus);
@@ -151,7 +201,7 @@ export function GameBoard({
       return;
     }
     resetRoundState(true);
-  }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs]);
+  }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs, difficultyPreset]);
 
   useEffect(() => {
     const loop = (now: number) => {
@@ -239,8 +289,16 @@ export function GameBoard({
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          setIsRunning(false);
-          setStatus(t.timeUpStatus);
+          if (currentRound >= MATCH_ROUNDS) {
+            setIsRunning(false);
+            setIsMatchComplete(true);
+            setStatus(t.matchComplete);
+          } else {
+            setIsRunning(false);
+            setIsPaused(true);
+            setIsBetweenRounds(true);
+            setStatus(`${t.round} ${currentRound}/${MATCH_ROUNDS} ${t.timeUpStatus}`);
+          }
           return 0;
         }
         return prev - 1;
@@ -261,7 +319,7 @@ export function GameBoard({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, isPaused, t.timeUpStatus]);
+  }, [isRunning, isPaused, t.timeUpStatus, t.matchComplete, t.round, currentRound]);
 
   useEffect(() => {
     if (!isRunning || !isRefreshing) return undefined;
@@ -417,6 +475,9 @@ export function GameBoard({
     }
 
     setScore((prev) => prev + awardedPoints);
+    if (resolvedWord.length >= goalConfig.minWordLength) {
+      setRoundLongWords((prev) => prev + 1);
+    }
     setSubmittedWords((prev) => [
       ...prev,
       { word: resolvedWord.toLocaleUpperCase(language), points: awardedPoints }
@@ -457,6 +518,7 @@ export function GameBoard({
     if (!isRunning || isPaused || isRefreshing || !powerUp) return;
 
     const { kind } = powerUp;
+    setRoundPowerUps((prev) => prev + 1);
     setPowerUp(null);
     powerUpRespawnAtRef.current = performance.now() + powerUpRespawnMs;
     const capDuration = (seconds: number) => Math.min(seconds, MAX_EFFECT_SECONDS);
@@ -538,12 +600,21 @@ export function GameBoard({
     resetRoundState(false);
     setIsMenuOpen(false);
     setIsHelpModalOpen(false);
+    setIsBetweenRounds(false);
+    setIsMatchComplete(false);
   }
 
   function startNewGame() {
     resetRoundState(true);
     setIsMenuOpen(false);
     setIsHelpModalOpen(false);
+  }
+
+  function startNextRound() {
+    if (currentRound >= MATCH_ROUNDS) return;
+    setCurrentRound((prev) => prev + 1);
+    setIsBetweenRounds(false);
+    resetRoundState(false);
   }
 
   function togglePauseResume() {
@@ -586,6 +657,32 @@ export function GameBoard({
           close: t.closeHelp
         }}
       />
+
+      {isBetweenRounds && !isMatchComplete && (
+        <div className="modalBackdrop" role="presentation">
+          <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.nextRound}>
+            <h2>{t.nextRound}</h2>
+            <p>
+              {t.round} {currentRound + 1}/{MATCH_ROUNDS}
+            </p>
+            <button type="button" onClick={startNextRound}>
+              {t.nextRound}
+            </button>
+          </section>
+        </div>
+      )}
+
+      {isMatchComplete && (
+        <div className="modalBackdrop" role="presentation">
+          <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.matchComplete}>
+            <h2>{t.matchComplete}</h2>
+            <p>{t.finalScore}: {score}</p>
+            <button type="button" onClick={startNewGame}>
+              {t.playMatchAgain}
+            </button>
+          </section>
+        </div>
+      )}
 
       <section className="topBar">
         <h1>{t.title}</h1>
@@ -644,11 +741,13 @@ export function GameBoard({
           <GameHud
             score={score}
             timeLeft={timeLeft}
+            roundLabel={`${currentRound}/${MATCH_ROUNDS}`}
             letterCount={tiles.length}
             targetCount={activeTileTarget}
             languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
             labels={{
               totalScore: t.totalScore,
+              round: t.round,
               timeLeft: t.timeLeft,
               flyingLetters: t.flyingLetters,
               target: t.target,
@@ -666,6 +765,7 @@ export function GameBoard({
             isRefreshing={isRefreshing || isPaused}
             isShieldActive={isShieldActive}
             activeEffects={activeEffects}
+            goals={roundGoals}
             submittedWords={submittedWords}
             onSubmitWord={submitWord}
             onBackspace={removeLastFromTray}
@@ -681,6 +781,7 @@ export function GameBoard({
               restartRound: t.restartRound,
               playAgain: t.playAgain,
               acceptedWords: t.acceptedWords,
+              goals: t.goals,
               noneYet: t.noneYet,
               effects: t.effects,
               noEffects: t.noEffects

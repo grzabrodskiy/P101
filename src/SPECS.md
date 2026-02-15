@@ -5,6 +5,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Core Gameplay
 - Game field is a square play area.
+- Gameplay is organized as a `3`-round match by default.
 - Game runs in timed rounds selected before start: `60s`, `90s`, or `120s` (`90s` default).
 - Base active letter count defaults to `8` and is configurable.
 - Letter tiles move continuously with velocity vectors.
@@ -19,7 +20,9 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Active tile alphabet, frequencies, and letter scores depend on selected language.
 - Example: Russian uses Cyrillic tiles and language-specific scoring/weights.
 - When timer reaches `0`, round stops and interactions are disabled.
-- User can restart a new round at any time.
+- If not on final round, player advances to next round.
+- After final round, match summary is shown with final score.
+- User can restart a round or start a new match at any time.
 
 ## Power-Up System
 - Power-ups are rendered in the field and move like letters.
@@ -80,6 +83,14 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Changing any option automatically restarts the game immediately.
 - Automatic restart on options change resets score and accepted words.
 
+## Round Goals
+- Each round has 3 active goals:
+- reach a score target,
+- submit long words target (`6+` or `7+` letters by difficulty),
+- use a target number of power-ups.
+- Goal targets scale by difficulty preset.
+- Goals are shown in the right panel with live progress and completion state.
+
 ## Help Popup
 - Help is shown as a modal popup opened from the in-game menu.
 - Popup includes a brief "how to play" section.
@@ -99,6 +110,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Wildcard tile value is `0`.
 - If `DW` is active, next valid word score is doubled.
 - On valid submit, add points to total score, record accepted word, then clear tray.
+- Score is cumulative across rounds within a match.
 
 ## UI Requirements
 - Show current total score.
@@ -111,6 +123,8 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Status message is displayed directly below the game board.
 - Show tray word and computed points.
 - Show accepted words list with points.
+- Show current round progress (`current/total`) in HUD.
+- Show between-round and match-complete overlays.
 - On desktop, controls/tray are to the right of the square.
 - On smaller screens, layout stacks vertically and remains touch-friendly.
 

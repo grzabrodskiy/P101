@@ -26,10 +26,12 @@ type Translations = {
   restartRound: string;
   playAgain: string;
   acceptedWords: string;
+  goals: string;
   noneYet: string;
   trayPlaceholder: string;
   wordPoints: string;
   totalScore: string;
+  round: string;
   timeLeft: string;
   flyingLetters: string;
   target: string;
@@ -62,6 +64,10 @@ type Translations = {
   lettersOnScreen: string;
   pause: string;
   resume: string;
+  nextRound: string;
+  matchComplete: string;
+  finalScore: string;
+  playMatchAgain: string;
   newGame: string;
   closeMenu: string;
   helpTitle: string;
@@ -75,6 +81,9 @@ type Translations = {
   pausedStatus: string;
   statusChecking: (word: string) => string;
   statusGreatWord: (word: string, points: number, suffix: string) => string;
+  goalScore: (points: number) => string;
+  goalLongWords: (count: number, minLength: number) => string;
+  goalPowerUps: (count: number) => string;
   powerUpActivated: Record<PowerUpKind, string>;
   powerUpHelp: Record<PowerUpKind, string>;
 };
@@ -95,10 +104,12 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Restart Round",
     playAgain: "Play Again",
     acceptedWords: "Accepted Words",
+    goals: "Round Goals",
     noneYet: "None yet",
     trayPlaceholder: "Tap letters to build a word",
     wordPoints: "Word Points",
     totalScore: "Total Score",
+    round: "Round",
     timeLeft: "Time Left",
     flyingLetters: "Flying Letters",
     target: "Target",
@@ -132,6 +143,10 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     help: "Help",
     pause: "Pause",
     resume: "Resume",
+    nextRound: "Next Round",
+    matchComplete: "Match Complete",
+    finalScore: "Final Score",
+    playMatchAgain: "Play Match Again",
     newGame: "New Game",
     closeMenu: "Close",
     helpTitle: "How To Play",
@@ -145,6 +160,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     pausedStatus: "Game paused.",
     statusChecking: (word) => `Checking "${word}"...`,
     statusGreatWord: (word, points, suffix) => `Great word: ${word} (+${points})${suffix}`,
+    goalScore: (points) => `Score at least ${points}`,
+    goalLongWords: (count, minLength) => `Make ${count} words of ${minLength}+ letters`,
+    goalPowerUps: (count) => `Use ${count} power-ups`,
     powerUpActivated: {
       bomb: "Bomb triggered. Refreshing letters...",
       multiplier: "x2 activated.",
@@ -189,10 +207,12 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Runde neu starten",
     playAgain: "Nochmal spielen",
     acceptedWords: "Akzeptierte Wörter",
+    goals: "Rundenziele",
     noneYet: "Noch keine",
     trayPlaceholder: "Tippe Buchstaben, um ein Wort zu bilden",
     wordPoints: "Wortpunkte",
     totalScore: "Gesamtpunkte",
+    round: "Runde",
     timeLeft: "Restzeit",
     flyingLetters: "Fliegende Buchstaben",
     target: "Ziel",
@@ -226,6 +246,10 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     help: "Hilfe",
     pause: "Pause",
     resume: "Fortsetzen",
+    nextRound: "Nächste Runde",
+    matchComplete: "Match beendet",
+    finalScore: "Endpunktzahl",
+    playMatchAgain: "Match neu starten",
     newGame: "Neues Spiel",
     closeMenu: "Schließen",
     helpTitle: "Spielhilfe",
@@ -239,6 +263,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     pausedStatus: "Spiel pausiert.",
     statusChecking: (word) => `Prüfe "${word}"...`,
     statusGreatWord: (word, points, suffix) => `Starkes Wort: ${word} (+${points})${suffix}`,
+    goalScore: (points) => `Mindestens ${points} Punkte`,
+    goalLongWords: (count, minLength) => `${count} Wörter mit ${minLength}+ Buchstaben`,
+    goalPowerUps: (count) => `${count} Power-ups nutzen`,
     powerUpActivated: {
       bomb: "Bombe ausgelöst. Buchstaben werden aktualisiert...",
       multiplier: "x2 aktiviert.",
@@ -283,10 +310,12 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Relancer",
     playAgain: "Rejouer",
     acceptedWords: "Mots acceptés",
+    goals: "Objectifs du round",
     noneYet: "Aucun",
     trayPlaceholder: "Touchez des lettres pour former un mot",
     wordPoints: "Points du mot",
     totalScore: "Score total",
+    round: "Manche",
     timeLeft: "Temps restant",
     flyingLetters: "Lettres volantes",
     target: "Cible",
@@ -320,6 +349,10 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     help: "Aide",
     pause: "Pause",
     resume: "Reprendre",
+    nextRound: "Manche suivante",
+    matchComplete: "Match terminé",
+    finalScore: "Score final",
+    playMatchAgain: "Rejouer le match",
     newGame: "Nouveau jeu",
     closeMenu: "Fermer",
     helpTitle: "Aide du jeu",
@@ -333,6 +366,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     pausedStatus: "Jeu en pause.",
     statusChecking: (word) => `Vérification de "${word}"...`,
     statusGreatWord: (word, points, suffix) => `Excellent mot : ${word} (+${points})${suffix}`,
+    goalScore: (points) => `Atteindre ${points} points`,
+    goalLongWords: (count, minLength) => `Faire ${count} mots de ${minLength}+ lettres`,
+    goalPowerUps: (count) => `Utiliser ${count} bonus`,
     powerUpActivated: {
       bomb: "Bombe activée. Rafraîchissement des lettres...",
       multiplier: "x2 activé.",
@@ -377,10 +413,12 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Ricomincia",
     playAgain: "Gioca ancora",
     acceptedWords: "Parole accettate",
+    goals: "Obiettivi round",
     noneYet: "Nessuna",
     trayPlaceholder: "Tocca le lettere per formare una parola",
     wordPoints: "Punti parola",
     totalScore: "Punteggio totale",
+    round: "Round",
     timeLeft: "Tempo rimasto",
     flyingLetters: "Lettere volanti",
     target: "Obiettivo",
@@ -414,6 +452,10 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     help: "Aiuto",
     pause: "Pausa",
     resume: "Riprendi",
+    nextRound: "Round successivo",
+    matchComplete: "Partita conclusa",
+    finalScore: "Punteggio finale",
+    playMatchAgain: "Rigioca partita",
     newGame: "Nuova partita",
     closeMenu: "Chiudi",
     helpTitle: "Guida gioco",
@@ -427,6 +469,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     pausedStatus: "Gioco in pausa.",
     statusChecking: (word) => `Controllo "${word}"...`,
     statusGreatWord: (word, points, suffix) => `Ottima parola: ${word} (+${points})${suffix}`,
+    goalScore: (points) => `Raggiungi ${points} punti`,
+    goalLongWords: (count, minLength) => `Fai ${count} parole da ${minLength}+ lettere`,
+    goalPowerUps: (count) => `Usa ${count} power-up`,
     powerUpActivated: {
       bomb: "Bomba attivata. Aggiornamento lettere...",
       multiplier: "x2 attivato.",
@@ -471,10 +516,12 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     restartRound: "Начать заново",
     playAgain: "Играть снова",
     acceptedWords: "Принятые слова",
+    goals: "Цели раунда",
     noneYet: "Пока нет",
     trayPlaceholder: "Нажимайте буквы, чтобы собрать слово",
     wordPoints: "Очки слова",
     totalScore: "Общий счёт",
+    round: "Раунд",
     timeLeft: "Осталось",
     flyingLetters: "Летающие буквы",
     target: "Цель",
@@ -508,6 +555,10 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     help: "Помощь",
     pause: "Пауза",
     resume: "Продолжить",
+    nextRound: "Следующий раунд",
+    matchComplete: "Матч завершен",
+    finalScore: "Итоговый счет",
+    playMatchAgain: "Начать матч заново",
     newGame: "Новая игра",
     closeMenu: "Закрыть",
     helpTitle: "Справка",
@@ -521,6 +572,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     pausedStatus: "Игра на паузе.",
     statusChecking: (word) => `Проверка "${word}"...`,
     statusGreatWord: (word, points, suffix) => `Отличное слово: ${word} (+${points})${suffix}`,
+    goalScore: (points) => `Набрать минимум ${points} очков`,
+    goalLongWords: (count, minLength) => `Собрать ${count} слов по ${minLength}+ букв`,
+    goalPowerUps: (count) => `Использовать ${count} бонуса`,
     powerUpActivated: {
       bomb: "Бомба активирована. Обновляем буквы...",
       multiplier: "x2 активирован.",

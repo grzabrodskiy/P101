@@ -3,7 +3,6 @@ import { useState } from "react";
 import { GameBoard } from "./components/GameBoard";
 import { OptionsModal } from "./components/OptionsModal";
 import {
-  BASE_TILE_COUNT,
   BASE_TILE_COUNT_OPTIONS,
   DIFFICULTY_PRESETS,
   MAX_BOUNCES_OPTIONS,
@@ -106,6 +105,7 @@ export default function App() {
         speedMultiplier={speedMultiplier}
         maxBounces={maxBounces}
         powerUpRespawnMs={powerUpRespawnMs}
+        difficultyPreset={selectedPreset}
         onOpenOptions={() => setIsOptionsModalOpen(true)}
       />
     </main>
