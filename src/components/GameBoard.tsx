@@ -9,9 +9,6 @@ import {
 
 import {
   BASE_TILE_COUNT,
-  COMBO_BONUS_STEP,
-  COMBO_MAX_MULTIPLIER,
-  COMBO_WINDOW_SECONDS,
   EXPLOSION_MS,
   MAX_EFFECT_SECONDS,
   POWERUP_SIZE,
@@ -105,11 +102,8 @@ export function GameBoard({
   const [isGameOver, setIsGameOver] = useState(false);
   const [canAdvanceRound, setCanAdvanceRound] = useState(false);
   const [roundScoreStart, setRoundScoreStart] = useState(0);
-  const [comboMultiplier, setComboMultiplier] = useState(1);
-  const [comboWindowLeft, setComboWindowLeft] = useState(0);
-  const [comboPulse, setComboPulse] = useState(false);
   const [feedbackBursts, setFeedbackBursts] = useState<
-    Array<{ id: number; text: string; tone: "score" | "combo" | "bonus" }>
+    Array<{ id: number; text: string; tone: "score" | "bonus" }>
   >([]);
 
   const [powerUp, setPowerUp] = useState<PowerUp | null>(() =>
@@ -132,6 +126,7 @@ export function GameBoard({
 
   const activeTileTarget = isMultiplierActive ? baseTileCount * 2 : baseTileCount;
   const [goalConfig, setGoalConfig] = useState<RoundGoalConfig>(() => rollGoalConfig(1));
+  const nextRoundGoalScore = rollGoalConfig(currentRound + 1).score;
 
   const roundScore = Math.max(0, score - roundScoreStart);
   const roundGoals = useMemo(
@@ -144,7 +139,7 @@ export function GameBoard({
     ],
     [goalConfig, roundScore, t]
   );
-  function pushFeedbackBurst(text: string, tone: "score" | "combo" | "bonus", lifetimeMs = 900) {
+  function pushFeedbackBurst(text: string, tone: "score" | "bonus", lifetimeMs = 900) {
     const id = feedbackIdRef.current++;
     setFeedbackBursts((prev) => [...prev, { id, text, tone }]);
     setTimeout(() => {
@@ -166,9 +161,6 @@ export function GameBoard({
     setGoalConfig(rollGoalConfig(roundNumber));
     setCanAdvanceRound(false);
     setIsGameOver(false);
-    setComboMultiplier(1);
-    setComboWindowLeft(0);
-    setComboPulse(false);
     setFeedbackBursts([]);
     setIsChecking(false);
     setTimeLeft(roundSeconds);
@@ -285,12 +277,6 @@ export function GameBoard({
         return prev - 1;
       });
 
-      setComboWindowLeft((prev) => {
-        if (prev <= 0) return 0;
-        const next = prev - 1;
-        if (next === 0) setComboMultiplier(1);
-        return next;
-      });
       setMultiplierLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setFreezeLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setWallLeft((prev) => (prev > 0 ? prev - 1 : 0));
@@ -451,20 +437,6 @@ export function GameBoard({
 
     let awardedPoints = (trayBaseScore + wordLengthBonus(resolvedWord.length)) * trayWordMultiplier;
     let messageSuffix = "";
-    const nextComboMultiplier =
-      comboWindowLeft > 0
-        ? Math.min(COMBO_MAX_MULTIPLIER, comboMultiplier + COMBO_BONUS_STEP)
-        : 1;
-    awardedPoints = Math.round(awardedPoints * nextComboMultiplier);
-    setComboMultiplier(nextComboMultiplier);
-    setComboWindowLeft(COMBO_WINDOW_SECONDS);
-    if (nextComboMultiplier > comboMultiplier) {
-      setComboPulse(true);
-      pushFeedbackBurst(`x${nextComboMultiplier.toFixed(2)}`, "combo", 800);
-    }
-    if (nextComboMultiplier > 1) {
-      messageSuffix += t.comboSuffix(nextComboMultiplier);
-    }
 
     setScore((prev) => prev + awardedPoints);
     pushFeedbackBurst(`+${awardedPoints}`, "score");
@@ -475,12 +447,6 @@ export function GameBoard({
     setTray([]);
     setStatus(t.statusGreatWord(resolvedWord.toLocaleUpperCase(language), awardedPoints, messageSuffix));
   }
-
-  useEffect(() => {
-    if (!comboPulse) return undefined;
-    const timeout = setTimeout(() => setComboPulse(false), 260);
-    return () => clearTimeout(timeout);
-  }, [comboPulse]);
 
   function removeLastFromTray() {
     if (!isRunning || isPaused || isRefreshing) return;
@@ -631,14 +597,11 @@ export function GameBoard({
 
       {isBetweenRounds && (
         <div className="modalBackdrop" role="presentation">
-          <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.nextRound}>
-            <h2>{canAdvanceRound ? t.nextRound : t.restartRound}</h2>
-            <p>
-              {canAdvanceRound ? `${t.round} ${currentRound + 1}` : t.statusScoreRequired(goalConfig.score)}
-            </p>
-            <p>{t.goalScore(goalConfig.score)}: {roundScore}/{goalConfig.score}</p>
-            <button type="button" onClick={canAdvanceRound ? startNextRound : restartRound}>
-              {canAdvanceRound ? t.nextRound : t.restartRound}
+          <section className="languageModal roundIntroModal" role="dialog" aria-modal="true" aria-label={t.nextRound}>
+            <h2>{t.round} {currentRound + 1}</h2>
+            <p>{t.goalScore(nextRoundGoalScore)}</p>
+            <button type="button" onClick={startNextRound}>
+              {t.startRound}
             </button>
           </section>
         </div>
@@ -648,8 +611,7 @@ export function GameBoard({
         <div className="modalBackdrop" role="presentation">
           <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.matchComplete}>
             <h2>{t.matchComplete}</h2>
-            <p>{t.finalScore}: {score}</p>
-            <p>{t.statusScoreRequired(goalConfig.score)}</p>
+            <p>{t.totalScore}: {score}</p>
             <button type="button" onClick={startNewGame}>
               {t.playMatchAgain}
             </button>
@@ -712,18 +674,16 @@ export function GameBoard({
         <section className="rightColumn">
           <GameHud
             roundScoreProgress={`${roundScore}/${goalConfig.score}`}
+            roundGoalMet={roundScore >= goalConfig.score}
             totalScore={score}
             timeLeft={timeLeft}
             roundLabel={`${currentRound}`}
-            comboLabel={comboWindowLeft > 0 ? `x${comboMultiplier.toFixed(2)} (${comboWindowLeft}s)` : "x1.00"}
-            comboIsPulsing={comboPulse}
             letterCount={tiles.length}
             languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
             labels={{
               roundScore: t.roundScore,
               totalScore: t.totalScore,
               round: t.round,
-              combo: t.combo,
               timeLeft: t.timeLeft,
               flyingLetters: t.flyingLetters,
               language: t.language

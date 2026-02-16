@@ -274,7 +274,7 @@ export function makePowerUp(id: number, kind?: PowerUpKind, speedMultiplier = 1)
 
 const WORD_VALIDATION_CACHE = new Map<string, boolean>();
 
-async function queryDictionary(word: string, locale: string): Promise<boolean> {
+async function queryDictionaryApi(word: string, locale: string): Promise<boolean> {
   const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/${locale}/${word}`);
   if (response.ok) {
     const data = await response.json();
@@ -288,6 +288,70 @@ async function queryDictionary(word: string, locale: string): Promise<boolean> {
   throw new Error(`dictionary-${locale}-status-${response.status}`);
 }
 
+const WIKTIONARY_HOST_BY_LANGUAGE: Record<LanguageCode, string> = {
+  en: "en.wiktionary.org",
+  de: "de.wiktionary.org",
+  fr: "fr.wiktionary.org",
+  it: "it.wiktionary.org",
+  ru: "ru.wiktionary.org"
+};
+
+async function queryWiktionary(word: string, language: LanguageCode): Promise<boolean> {
+  const host = WIKTIONARY_HOST_BY_LANGUAGE[language];
+  const url = `https://${host}/w/api.php?action=query&titles=${encodeURIComponent(word)}&format=json&origin=*`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`wiktionary-${language}-status-${response.status}`);
+  }
+
+  const data = await response.json();
+  const pages = data?.query?.pages;
+  if (!pages || typeof pages !== "object") return false;
+  const firstPage = Object.values(pages)[0] as { missing?: string };
+  return !("missing" in (firstPage ?? {}));
+}
+
+async function queryDatamuse(word: string): Promise<boolean> {
+  const response = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&max=8`);
+  if (!response.ok) {
+    throw new Error(`datamuse-status-${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!Array.isArray(data)) return false;
+  const normalized = word.toLowerCase();
+  return data.some((entry) => {
+    const candidate = typeof entry?.word === "string" ? entry.word.toLowerCase() : "";
+    return candidate === normalized;
+  });
+}
+
+async function queryWordProviders(word: string, language: LanguageCode): Promise<boolean> {
+  const locale = dictionaryLocale(language);
+  const providers: Array<() => Promise<boolean>> = [
+    () => queryDictionaryApi(word, locale),
+    () => queryWiktionary(word, language)
+  ];
+
+  // Datamuse coverage is strongest for English.
+  if (language === "en") {
+    providers.push(() => queryDatamuse(word));
+  }
+
+  let sawDefinitiveMiss = false;
+  for (const provider of providers) {
+    try {
+      const result = await provider();
+      if (result) return true;
+      sawDefinitiveMiss = true;
+    } catch {
+      // Try next provider in stack.
+    }
+  }
+
+  return sawDefinitiveMiss ? false : false;
+}
+
 export async function isRealWord(word: string, language: LanguageCode): Promise<boolean> {
   const normalized = word.toLowerCase();
   if (normalized.length < 2) return false;
@@ -296,15 +360,9 @@ export async function isRealWord(word: string, language: LanguageCode): Promise<
   const cached = WORD_VALIDATION_CACHE.get(cacheKey);
   if (cached !== undefined) return cached;
 
-  const locale = dictionaryLocale(language);
-  try {
-    const isValid = await queryDictionary(normalized, locale);
-    WORD_VALIDATION_CACHE.set(cacheKey, isValid);
-    return isValid;
-  } catch {
-    WORD_VALIDATION_CACHE.set(cacheKey, false);
-    return false;
-  }
+  const isValid = await queryWordProviders(normalized, language);
+  WORD_VALIDATION_CACHE.set(cacheKey, isValid);
+  return isValid;
 }
 
 export function wildcardCandidates(chars: Array<Letter | "*">, language: LanguageCode): string[] {

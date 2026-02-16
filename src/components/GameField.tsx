@@ -11,7 +11,7 @@ type GameFieldProps = {
   isRunning: boolean;
   isRefreshing: boolean;
   explosionPulse: boolean;
-  feedbackBursts: Array<{ id: number; text: string; tone: "score" | "combo" | "bonus" }>;
+  feedbackBursts: Array<{ id: number; text: string; tone: "score" | "bonus" }>;
   onCollectTile: (id: number) => void;
   onActivatePowerUp: (event: SyntheticEvent) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLElement>) => void;

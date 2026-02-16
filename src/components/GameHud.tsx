@@ -1,12 +1,11 @@
 type GameHudProps = {
   roundScoreProgress: string;
+  roundGoalMet: boolean;
   totalScore: number;
   timeLeft: number;
   letterCount: number;
   languageLabel: string;
   roundLabel: string;
-  comboLabel: string;
-  comboIsPulsing: boolean;
   labels: {
     roundScore: string;
     totalScore: string;
@@ -14,19 +13,17 @@ type GameHudProps = {
     flyingLetters: string;
     language: string;
     round: string;
-    combo: string;
   };
 };
 
 export function GameHud({
   roundScoreProgress,
+  roundGoalMet,
   totalScore,
   timeLeft,
   letterCount,
   languageLabel,
   roundLabel,
-  comboLabel,
-  comboIsPulsing,
   labels
 }: GameHudProps) {
   return (
@@ -34,7 +31,10 @@ export function GameHud({
       <div className="hudTable">
         <div className="hudCell">
           <span className="hudLabel">{labels.roundScore}</span>
-          <span className="hudValue">{roundScoreProgress}</span>
+          <span className={roundGoalMet ? "hudValue hudGoalMet" : "hudValue"}>
+            {roundScoreProgress}
+            {roundGoalMet ? " ✓" : ""}
+          </span>
         </div>
 
         <div className="hudCell">
@@ -55,13 +55,6 @@ export function GameHud({
         <div className="hudCell">
           <span className="hudLabel">{labels.flyingLetters}</span>
           <span className="hudValue">{letterCount}</span>
-        </div>
-
-        <div className="hudCell">
-          <span className="hudLabel">{labels.combo}</span>
-          <span className={comboIsPulsing ? "hudValue hudCombo hudComboPulse" : "hudValue hudCombo"}>
-            {comboLabel}
-          </span>
         </div>
 
         <div className="hudCell">

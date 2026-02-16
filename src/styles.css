@@ -97,6 +97,12 @@ body {
   cursor: pointer;
 }
 
+.roundIntroModal {
+  width: min(300px, calc(100vw - 24px));
+  gap: 8px;
+  text-align: center;
+}
+
 .helpModal {
   width: min(700px, calc(100vw - 24px));
   max-height: min(92vh, 900px);
@@ -315,17 +321,13 @@ h1 {
   min-width: 0;
 }
 
+.hudGoalMet {
+  color: #166534;
+  font-weight: 800;
+}
+
 .hudTimeLow {
   color: #b91c1c;
-}
-
-.hudCombo {
-  transition: transform 180ms ease, color 180ms ease;
-}
-
-.hudComboPulse {
-  color: #b91c1c;
-  transform: scale(1.08);
 }
 
 .languagePicker {
@@ -565,10 +567,6 @@ h1 {
 
 .feedbackBurst-score {
   color: #14532d;
-}
-
-.feedbackBurst-combo {
-  color: #1d4ed8;
 }
 
 .feedbackBurst-bonus {

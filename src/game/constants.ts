@@ -19,9 +19,6 @@ export const TRANSITION_SECONDS = 0.24;
 export const REFRESH_SPAWN_MS = 130;
 export const EXPLOSION_MS = 260;
 export const POWERUP_RESPAWN_MS = 1800;
-export const COMBO_WINDOW_SECONDS = 8;
-export const COMBO_BONUS_STEP = 0.25;
-export const COMBO_MAX_MULTIPLIER = 2;
 export const ROUND_PACE_STEP = 0.12;
 
 export const DIFFICULTY_PRESETS = {

@@ -87,12 +87,14 @@ export function GameSidePanel({
         )}
         <div className="trayScore">
           {labels.wordPoints}: {trayScore}
-          <span className="trayScoreDetails">
-            {" "}
-            ({trayBaseScore}
-            {trayLengthBonus > 0 ? `+${trayLengthBonus}` : ""}
-            {trayWordMultiplier > 1 ? ` x${trayWordMultiplier}` : ""})
-          </span>
+          {trayLengthBonus > 0 || trayWordMultiplier > 1 ? (
+            <span className="trayScoreDetails">
+              {" "}
+              ({trayBaseScore}
+              {trayLengthBonus > 0 ? `+${trayLengthBonus}` : ""}
+              {trayWordMultiplier > 1 ? ` x${trayWordMultiplier}` : ""})
+            </span>
+          ) : null}
         </div>
       </section>
 

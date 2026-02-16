@@ -98,6 +98,8 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Next round unlocks only if the round score goal is met.
 - If the score goal is missed when the timer ends, the run ends (game over) and player starts a new game.
 - Goal progress is shown in the top HUD as `current/target` (for example `0/45`).
+- Between rounds, show a compact popup with just next round number and score requirement.
+- Game-over popup shows total score and replay action.
 
 ## Help Popup
 - Help is shown as a modal popup opened from the in-game menu.
@@ -110,7 +112,11 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Word Validation
 - Submitted word must be at least `4` characters.
-- Validation is performed against a dictionary API using the selected language locale.
+- Validation is performed against multiple dictionary APIs with fallback behavior.
+- Provider stack currently uses:
+- `dictionaryapi.dev` (language locale),
+- Wiktionary API by selected language,
+- Datamuse (English fallback).
 - There is no local fallback dictionary; if API lookup fails, word validation fails.
 - Wildcard (`*`) letter tiles spawn naturally with low Scrabble-like frequency.
 - Wildcard words are evaluated by trying dictionary-valid substitutions.
@@ -123,10 +129,6 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Word multipliers (`DW`/`TW`) are applied after letter math: `(letter-score + length bonus) * (all word multipliers)`.
 - Multiple word multipliers stack multiplicatively (for example `DW + DW = x4`, `DW + TW = x6`).
 - Wildcard tile value is `0`.
-- Combo scoring is active:
-- valid submits within `8s` chain combo;
-- combo multiplier starts at `x1.00`, increases by `+0.25` per chain step, capped at `x2.00`;
-- combo resets when timer expires.
 - On valid submit, add points to total score, record accepted word, then clear tray.
 - Score is cumulative across endless rounds until user starts a new game.
 
@@ -144,10 +146,8 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Show accepted words list with points.
 - Show current round number in HUD.
 - Show score-goal progress in HUD as `current/target`.
-- Show live combo multiplier (and remaining combo window while active) in HUD.
-- Combo HUD value pulses when combo increases.
 - Show between-round overlay with round goal completion bonus summary.
-- Successful submits show floating in-field score popups (and combo popup when combo increases).
+- Successful submits show floating in-field score popups.
 - Power-ups use a unified icon system (emoji glyph + optional mini badge like `x2`, `+10`, `+15`) in-field and in Help.
 - Power-up circles are color-coded with distinct gradients and subtle glow to improve at-a-glance recognition.
 - On desktop, controls/tray are to the right of the square.

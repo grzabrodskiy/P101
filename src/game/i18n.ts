@@ -35,7 +35,6 @@ type Translations = {
   roundScore: string;
   totalScore: string;
   round: string;
-  combo: string;
   timeLeft: string;
   flyingLetters: string;
   target: string;
@@ -88,7 +87,6 @@ type Translations = {
   closeHelp: string;
   pausedStatus: string;
   statusChecking: (word: string) => string;
-  comboSuffix: (multiplier: number) => string;
   statusRoundBonus: (completed: number, total: number, bonus: number) => string;
   statusScoreRequired: (points: number) => string;
   statusGreatWord: (word: string, points: number, suffix: string) => string;
@@ -124,7 +122,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     roundScore: "Round Score",
     totalScore: "Total Score",
     round: "Round",
-    combo: "Combo",
     timeLeft: "Time Left",
     flyingLetters: "Active Letters",
     target: "Target",
@@ -178,7 +175,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Close",
     pausedStatus: "Game paused.",
     statusChecking: (word) => `Checking "${word}"...`,
-    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Goals completed ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Reach ${points} score this round to advance.`,
@@ -229,7 +225,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     roundScore: "Rundenpunkte",
     totalScore: "Gesamtpunkte",
     round: "Runde",
-    combo: "Combo",
     timeLeft: "Restzeit",
     flyingLetters: "Aktive Buchstaben",
     target: "Ziel",
@@ -283,7 +278,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Schließen",
     pausedStatus: "Spiel pausiert.",
     statusChecking: (word) => `Prüfe "${word}"...`,
-    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Ziele erreicht ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Erreiche ${points} Punkte in dieser Runde zum Weiterkommen.`,
@@ -334,7 +328,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     roundScore: "Score manche",
     totalScore: "Score total",
     round: "Manche",
-    combo: "Combo",
     timeLeft: "Temps restant",
     flyingLetters: "Lettres actives",
     target: "Cible",
@@ -388,7 +381,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Fermer",
     pausedStatus: "Jeu en pause.",
     statusChecking: (word) => `Vérification de "${word}"...`,
-    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Objectifs atteints ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Atteins ${points} points ce round pour avancer.`,
@@ -439,7 +431,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     roundScore: "Punteggio round",
     totalScore: "Punteggio totale",
     round: "Round",
-    combo: "Combo",
     timeLeft: "Tempo rimasto",
     flyingLetters: "Lettere attive",
     target: "Obiettivo",
@@ -493,7 +484,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Chiudi",
     pausedStatus: "Gioco in pausa.",
     statusChecking: (word) => `Controllo "${word}"...`,
-    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Obiettivi completati ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Raggiungi ${points} punti in questo round per avanzare.`,
@@ -544,7 +534,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     roundScore: "Счёт раунда",
     totalScore: "Общий счёт",
     round: "Раунд",
-    combo: "Комбо",
     timeLeft: "Осталось",
     flyingLetters: "Активные буквы",
     target: "Цель",
@@ -598,7 +587,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Закрыть",
     pausedStatus: "Игра на паузе.",
     statusChecking: (word) => `Проверка "${word}"...`,
-    comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Цели выполнены ${completed}/${total}. Бонус +${bonus}.`,
     statusScoreRequired: (points) => `Наберите ${points} очков в раунде, чтобы перейти дальше.`,
