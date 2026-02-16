@@ -163,6 +163,8 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Application source code lives under `src/`.
 - `App.tsx` should stay thin and orchestration-focused.
 - Core gameplay state/loop logic should live in a dedicated `GameBoard` component.
+- Shared pure logic is extracted into `src/game` modules (for example scoring and round-goal utilities).
+- Complex tray/word workflows are extracted into dedicated hooks under `src/hooks`.
 - Run locally with `pnpm run dev` (`127.0.0.1:5173`, strict port).
 - Production build output directory is `build/`.
 

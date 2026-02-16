@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-  type SyntheticEvent
-} from "react";
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
 
 import {
   BASE_TILE_COUNT,
@@ -23,8 +16,10 @@ import {
   type SpeedMultiplier
 } from "../game/constants";
 import { LANGUAGE_OPTIONS, type LanguageCode, UI_TEXT } from "../game/i18n";
-import { isRealWord, makePowerUp, makeTile, updateMovingEntity, wildcardCandidates } from "../game/logic";
-import type { Letter, PowerUp, SubmittedWord, Tile, TrayTile } from "../game/types";
+import { makePowerUp, makeTile, updateMovingEntity } from "../game/logic";
+import { rollGoalConfig } from "../game/rounds";
+import type { PowerUp, Tile } from "../game/types";
+import { useWordTray } from "../hooks/useWordTray";
 import { GameField } from "./GameField";
 import { GameHud } from "./GameHud";
 import { GameMenu } from "./GameMenu";
@@ -34,26 +29,6 @@ import { HelpModal } from "./HelpModal";
 function stopEvent(event: SyntheticEvent) {
   event.preventDefault();
   event.stopPropagation();
-}
-
-type RoundGoalConfig = {
-  score: number;
-};
-
-function rollGoalConfig(round: number): RoundGoalConfig {
-  return {
-    score: 45 + (round - 1) * 15
-  };
-}
-
-function wordLengthBonus(length: number): number {
-  if (length <= 4) return 0;
-  if (length === 5) return 4;
-  if (length === 6) return 8;
-  if (length === 7) return 16;
-  if (length === 8 || length === 9) return 32;
-  if (length === 10) return 64;
-  return 64 + (length - 10);
 }
 
 type GameBoardProps = {
@@ -82,22 +57,14 @@ export function GameBoard({
   const tickRef = useRef(0);
   const feedbackIdRef = useRef(1);
   const powerUpRespawnAtRef = useRef(0);
-  const pointerRef = useRef<{ x: number; y: number } | null>(null);
-  const validateSeqRef = useRef(0);
   const mountedRef = useRef(false);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
     Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, language, speedMultiplier))
   );
-  const [tray, setTray] = useState<TrayTile[]>([]);
   const [score, setScore] = useState(0);
   const [currentRound, setCurrentRound] = useState(1);
   const [status, setStatus] = useState(t.initialStatus);
-  const [submittedWords, setSubmittedWords] = useState<SubmittedWord[]>([]);
-  const [isChecking, setIsChecking] = useState(false);
-  const [wordValidation, setWordValidation] = useState<"too-short" | "checking" | "valid" | "invalid">(
-    "too-short"
-  );
   const [timeLeft, setTimeLeft] = useState<number>(roundSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -128,20 +95,42 @@ export function GameBoard({
   const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
   const activeTileTarget = baseTileCount;
-  const [goalConfig, setGoalConfig] = useState<RoundGoalConfig>(() => rollGoalConfig(1));
+  const [goalConfig, setGoalConfig] = useState(() => rollGoalConfig(1));
   const nextRoundGoalScore = rollGoalConfig(currentRound + 1).score;
 
   const roundScore = Math.max(0, score - roundScoreStart);
-  const roundGoals = useMemo(
-    () => [
-      {
-        label: t.goalScore(goalConfig.score),
-        detail: `${roundScore}/${goalConfig.score}`,
-        done: roundScore >= goalConfig.score
-      }
-    ],
-    [goalConfig, roundScore, t]
-  );
+  const {
+    tray,
+    submittedWords,
+    isChecking,
+    canSubmit,
+    trayBaseScore,
+    trayWordMultiplier,
+    trayLengthBonus,
+    trayScore,
+    appendTile,
+    removeLast,
+    clear,
+    submitWord,
+    resetWordState
+  } = useWordTray({
+    language,
+    isRunning,
+    isPaused,
+    isRefreshing,
+    text: {
+      wordMin4: t.wordMin4,
+      trayInvalid: t.trayInvalid,
+      noValidWord: t.noValidWord,
+      statusChecking: t.statusChecking
+    },
+    onSetStatus: setStatus,
+    onAddScore: (points) => setScore((previous) => previous + points),
+    onWordAccepted: (wordUpper, points) => {
+      pushFeedbackBurst(`+${points}`, "score");
+      setStatus(t.statusGreatWord(wordUpper, points, ""));
+    }
+  });
   function pushFeedbackBurst(text: string, tone: "score" | "bonus", lifetimeMs = 900) {
     const id = feedbackIdRef.current++;
     setFeedbackBursts((prev) => [...prev, { id, text, tone }]);
@@ -155,17 +144,14 @@ export function GameBoard({
     idRef.current = 1;
     tickRef.current = 0;
     powerUpRespawnAtRef.current = 0;
-    pointerRef.current = null;
 
     setTiles(Array.from({ length: baseTileCount }, () => makeTile(idRef.current++, language, speedMultiplier)));
-    setTray([]);
-    setSubmittedWords([]);
+    resetWordState();
     setRoundScoreStart(nextScoreStart);
     setGoalConfig(rollGoalConfig(roundNumber));
     setCanAdvanceRound(false);
     setIsGameOver(false);
     setFeedbackBursts([]);
-    setIsChecking(false);
     setTimeLeft(roundSeconds);
     setIsRunning(true);
     setIsPaused(false);
@@ -320,39 +306,6 @@ export function GameBoard({
     return () => clearTimeout(timeout);
   }, [explosionPulse]);
 
-  const trayBaseScore = useMemo(
-    () => tray.reduce((sum, tile) => sum + tile.value * (tile.letterMultiplier ?? 1), 0),
-    [tray]
-  );
-  const trayWordMultiplier = useMemo(
-    () => tray.reduce((product, tile) => product * (tile.wordMultiplier ?? 1), 1),
-    [tray]
-  );
-  const trayLengthBonus = useMemo(() => wordLengthBonus(tray.length), [tray.length]);
-  const trayScore = useMemo(
-    () => (trayBaseScore + trayLengthBonus) * trayWordMultiplier,
-    [trayBaseScore, trayLengthBonus, trayWordMultiplier]
-  );
-  const canSubmit = isRunning && !isPaused && !isRefreshing && !isChecking && wordValidation === "valid";
-
-  useEffect(() => {
-    if (!isRunning || isRefreshing || tray.length < 4) {
-      setWordValidation("too-short");
-      return;
-    }
-
-    setWordValidation("checking");
-    const seq = ++validateSeqRef.current;
-    const timeout = setTimeout(async () => {
-      const chars = tray.map((tile) => tile.char);
-      const resolvedWord = await resolveSubmittedWord(chars);
-      if (validateSeqRef.current !== seq) return;
-      setWordValidation(resolvedWord ? "valid" : "invalid");
-    }, 220);
-
-    return () => clearTimeout(timeout);
-  }, [tray, isRunning, isRefreshing, language]);
-
   const activeEffects = useMemo(() => {
     const effects: string[] = [];
     if (isFrozen) effects.push(`${t.effectFreeze} ${freezeLeft}s`);
@@ -377,17 +330,7 @@ export function GameBoard({
     setTiles((prev) => {
       const found = prev.find((tile) => tile.id === tileId);
       if (!found) return prev;
-
-      setTray((old) => [
-        ...old,
-        {
-          char: found.char,
-          value: found.value,
-          id: found.id,
-          letterMultiplier: found.letterMultiplier,
-          wordMultiplier: found.wordMultiplier
-        }
-      ]);
+      appendTile(found);
 
       const nextTiles = prev.filter((tile) => tile.id !== tileId);
       if (nextTiles.length < activeTileTarget) {
@@ -395,72 +338,6 @@ export function GameBoard({
       }
       return nextTiles;
     });
-  }
-
-  async function resolveSubmittedWord(chars: Array<Letter | "*">): Promise<string | null> {
-    const candidates = wildcardCandidates(chars, language);
-    if (candidates.length === 0) return null;
-
-    for (const candidate of candidates) {
-      const isValid = await isRealWord(candidate.toLowerCase(), language);
-      if (isValid) return candidate;
-    }
-
-    return null;
-  }
-
-  async function submitWord() {
-    if (isChecking || !isRunning || isPaused || isRefreshing) return;
-    if (tray.length < 4) {
-      setStatus(t.wordMin4);
-      return;
-    }
-    if (wordValidation !== "valid") {
-      setStatus(t.trayInvalid);
-      return;
-    }
-
-    const chars = tray.map((tile) => tile.char);
-
-    setIsChecking(true);
-    setStatus(t.statusChecking(chars.join("").toLowerCase()));
-    const resolvedWord = await resolveSubmittedWord(chars);
-    setIsChecking(false);
-
-    if (!resolvedWord) {
-      setStatus(t.noValidWord);
-      return;
-    }
-
-    let awardedPoints = (trayBaseScore + wordLengthBonus(resolvedWord.length)) * trayWordMultiplier;
-    let messageSuffix = "";
-
-    setScore((prev) => prev + awardedPoints);
-    pushFeedbackBurst(`+${awardedPoints}`, "score");
-    setSubmittedWords((prev) => [
-      ...prev,
-      { word: resolvedWord.toLocaleUpperCase(language), points: awardedPoints }
-    ]);
-    setTray([]);
-    setStatus(t.statusGreatWord(resolvedWord.toLocaleUpperCase(language), awardedPoints, messageSuffix));
-  }
-
-  function removeLastFromTray() {
-    if (!isRunning || isPaused || isRefreshing) return;
-
-    setTray((prev) => {
-      for (let index = prev.length - 1; index >= 0; index -= 1) {
-        if (!prev[index].locked) {
-          return [...prev.slice(0, index), ...prev.slice(index + 1)];
-        }
-      }
-      return prev;
-    });
-  }
-
-  function clearTray() {
-    if (!isRunning || isPaused || isRefreshing) return;
-    setTray([]);
   }
 
   function activatePowerUp(event: SyntheticEvent) {
@@ -515,17 +392,6 @@ export function GameBoard({
     setStatus(t.powerUpActivated["extra-time-15"]);
   }
 
-  function restartRound() {
-    if (isGameOver) {
-      startNewGame();
-      return;
-    }
-    resetRoundState(false);
-    setIsMenuOpen(false);
-    setIsHelpModalOpen(false);
-    setIsBetweenRounds(false);
-  }
-
   function startNewGame() {
     resetRoundState(true);
     setIsMenuOpen(false);
@@ -547,18 +413,6 @@ export function GameBoard({
       setStatus(next ? t.pausedStatus : t.initialStatus);
       return next;
     });
-  }
-
-  function handleFieldPointerMove(event: ReactPointerEvent<HTMLElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    pointerRef.current = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    };
-  }
-
-  function handleFieldPointerLeave() {
-    pointerRef.current = null;
   }
 
   return (
@@ -658,8 +512,8 @@ export function GameBoard({
             feedbackBursts={feedbackBursts}
             onCollectTile={collectTile}
             onActivatePowerUp={activatePowerUp}
-            onPointerMove={handleFieldPointerMove}
-            onPointerLeave={handleFieldPointerLeave}
+            onPointerMove={() => {}}
+            onPointerLeave={() => {}}
             powerUpHelpByKind={t.powerUpHelp}
           />
           <p className="status statusUnderBoard">{status}</p>
@@ -697,8 +551,8 @@ export function GameBoard({
             activeEffects={activeEffects}
             submittedWords={submittedWords}
             onSubmitWord={submitWord}
-            onBackspace={removeLastFromTray}
-            onClear={clearTray}
+            onBackspace={removeLast}
+            onClear={clear}
             onRestart={startNewGame}
             labels={{
               trayPlaceholder: t.trayPlaceholder,
