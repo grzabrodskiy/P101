@@ -5,12 +5,14 @@ import type { Tile } from "../game/types";
 type LetterTileProps = {
   tile: Tile;
   disabled: boolean;
+  slowActive: boolean;
   onCollect: (id: number) => void;
 };
 
-export function LetterTile({ tile, disabled, onCollect }: LetterTileProps) {
+export function LetterTile({ tile, disabled, slowActive, onCollect }: LetterTileProps) {
   const tileClasses = [
     "tile",
+    slowActive ? "tile-slow" : "",
     tile.letterMultiplier === 2 ? "tile-double-letter" : "",
     tile.letterMultiplier === 3 ? "tile-triple-letter" : "",
     tile.wordMultiplier === 2 ? "tile-double-word" : "",

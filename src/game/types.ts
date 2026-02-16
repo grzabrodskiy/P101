@@ -21,7 +21,6 @@ export type Tile = MovingEntity & {
 
 export type PowerUpKind =
   | "bomb"
-  | "multiplier"
   | "freeze"
   | "wall"
   | "slow"

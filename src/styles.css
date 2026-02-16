@@ -359,6 +359,58 @@ h1 {
   touch-action: manipulation;
 }
 
+.field-freeze-active {
+  border-color: #1d4ed8;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.75),
+    0 0 0 2px rgba(191, 219, 254, 0.95);
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 36%),
+    radial-gradient(circle at 82% 22%, rgba(224, 242, 254, 0.62) 0%, rgba(224, 242, 254, 0) 38%),
+    linear-gradient(45deg, rgba(219, 234, 254, 0.7) 25%, transparent 25%) 0 0 / 48px 48px,
+    linear-gradient(-45deg, rgba(219, 234, 254, 0.7) 25%, transparent 25%) 0 0 / 48px 48px,
+    linear-gradient(45deg, transparent 75%, rgba(219, 234, 254, 0.7) 75%) 0 0 / 48px 48px,
+    linear-gradient(-45deg, transparent 75%, rgba(219, 234, 254, 0.7) 75%) 0 0 / 48px 48px,
+    #eff6ff;
+}
+
+.field-wall-active {
+  border-width: 6px;
+  border-color: #7c2d12;
+  box-shadow:
+    inset 0 0 0 2px #1f2937,
+    0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.wallFrame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 10px 0 0 #b45309,
+    inset 0 -10px 0 0 #92400e,
+    inset 10px 0 0 0 #a16207,
+    inset -10px 0 0 0 #78350f;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(17, 24, 39, 0) 0,
+      rgba(17, 24, 39, 0) 22px,
+      rgba(17, 24, 39, 0.28) 22px,
+      rgba(17, 24, 39, 0.28) 24px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(17, 24, 39, 0) 0,
+      rgba(17, 24, 39, 0) 30px,
+      rgba(17, 24, 39, 0.24) 30px,
+      rgba(17, 24, 39, 0.24) 32px
+    );
+  opacity: 0.85;
+}
+
 .tile {
   position: absolute;
   left: 0;
@@ -376,6 +428,30 @@ h1 {
   user-select: none;
   will-change: transform, opacity;
   z-index: 2;
+}
+
+.field-slow-active .tile,
+.tile-slow {
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 62% 30%, rgba(254, 252, 232, 0.9) 0%, rgba(254, 252, 232, 0) 36%),
+    repeating-linear-gradient(
+      45deg,
+      #bbf7d0 0,
+      #bbf7d0 8px,
+      #86efac 8px,
+      #86efac 16px
+    );
+  border-color: #166534;
+}
+
+.tile-slow::after {
+  content: "🐢";
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 .tile-double-letter {
@@ -529,26 +605,106 @@ h1 {
 
 .explosion {
   position: absolute;
-  inset: 0;
+  inset: -8%;
   pointer-events: none;
   z-index: 7;
   background: radial-gradient(
     circle at center,
-    rgba(255, 241, 118, 0.82) 0%,
-    rgba(239, 68, 68, 0.42) 40%,
-    rgba(239, 68, 68, 0) 74%
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(254, 240, 138, 0.92) 14%,
+    rgba(250, 204, 21, 0.88) 26%,
+    rgba(249, 115, 22, 0.78) 40%,
+    rgba(239, 68, 68, 0.58) 58%,
+    rgba(239, 68, 68, 0) 88%
   );
-  animation: explosionPulse 260ms ease-out forwards;
+  animation: explosionPulse 520ms ease-out forwards;
+}
+
+.explosion::before,
+.explosion::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 4px solid rgba(255, 255, 255, 0.72);
+  animation: shockRing 520ms ease-out forwards;
+}
+
+.explosion::after {
+  inset: 10%;
+  border-color: rgba(254, 215, 170, 0.82);
+  animation-delay: 90ms;
+}
+
+.explosion {
+  box-shadow: 0 0 60px 20px rgba(251, 146, 60, 0.42);
+}
+
+.explosion::before {
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.5);
+}
+
+.explosion::after {
+  box-shadow: 0 0 18px rgba(254, 215, 170, 0.48);
+}
+
+.field-exploding {
+  animation: fieldShake 260ms ease-in-out;
+}
+
+.field-exploding::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 55%),
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(254, 240, 138, 0.34) 0deg 10deg,
+      rgba(249, 115, 22, 0) 10deg 20deg
+    );
+  animation: blastFlash 320ms ease-out forwards;
 }
 
 @keyframes explosionPulse {
   from {
-    opacity: 0.9;
-    transform: scale(0.96);
+    opacity: 1;
+    transform: scale(0.58);
   }
   to {
     opacity: 0;
-    transform: scale(1.08);
+    transform: scale(1.34);
+  }
+}
+
+@keyframes shockRing {
+  from {
+    opacity: 1;
+    transform: scale(0.48);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.54);
+  }
+}
+
+@keyframes fieldShake {
+  0% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-4px, 1px, 0); }
+  40% { transform: translate3d(4px, -2px, 0); }
+  60% { transform: translate3d(-3px, 2px, 0); }
+  80% { transform: translate3d(3px, -1px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes blastFlash {
+  from {
+    opacity: 0.95;
+  }
+  to {
+    opacity: 0;
   }
 }
 

@@ -93,7 +93,6 @@ export const POWERUP_META: Record<
   { label: string; durationSeconds?: number }
 > = {
   bomb: { label: "💣" },
-  multiplier: { label: "x2", durationSeconds: 12 },
   freeze: { label: "❄️", durationSeconds: 5 },
   wall: { label: "🧱", durationSeconds: 15 },
   slow: { label: "⏳", durationSeconds: 8 },
@@ -105,7 +104,6 @@ export const POWERUP_TYPES = Object.keys(POWERUP_META) as PowerUpKind[];
 
 export const POWERUP_SPAWN_WEIGHTS: Record<PowerUpKind, number> = {
   bomb: 1,
-  multiplier: 1,
   freeze: 1,
   wall: 1,
   slow: 1,

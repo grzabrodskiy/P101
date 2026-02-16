@@ -11,6 +11,9 @@ type GameFieldProps = {
   isRunning: boolean;
   isRefreshing: boolean;
   explosionPulse: boolean;
+  isFreezeActive: boolean;
+  isWallActive: boolean;
+  isSlowActive: boolean;
   feedbackBursts: Array<{ id: number; text: string; tone: "score" | "bonus" }>;
   onCollectTile: (id: number) => void;
   onActivatePowerUp: (event: SyntheticEvent) => void;
@@ -25,6 +28,9 @@ export function GameField({
   isRunning,
   isRefreshing,
   explosionPulse,
+  isFreezeActive,
+  isWallActive,
+  isSlowActive,
   feedbackBursts,
   onCollectTile,
   onActivatePowerUp,
@@ -34,14 +40,20 @@ export function GameField({
 }: GameFieldProps) {
   return (
     <section
-      className="field"
+      className={`field${explosionPulse ? " field-exploding" : ""}${isFreezeActive ? " field-freeze-active" : ""}${isWallActive ? " field-wall-active" : ""}${isSlowActive ? " field-slow-active" : ""}`}
       style={{ width: FIELD_SIZE, height: FIELD_SIZE }}
       aria-label="Flying letter area"
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
     >
       {tiles.map((tile) => (
-        <LetterTile key={tile.id} tile={tile} disabled={!isRunning || isRefreshing} onCollect={onCollectTile} />
+        <LetterTile
+          key={tile.id}
+          tile={tile}
+          disabled={!isRunning || isRefreshing}
+          slowActive={isSlowActive}
+          onCollect={onCollectTile}
+        />
       ))}
 
       {powerUp && (
@@ -54,6 +66,7 @@ export function GameField({
       )}
 
       {explosionPulse && <div className="explosion" />}
+      {isWallActive && <div className="wallFrame" aria-hidden="true" />}
 
       {feedbackBursts.map((burst) => (
         <div key={burst.id} className={`feedbackBurst feedbackBurst-${burst.tone}`}>

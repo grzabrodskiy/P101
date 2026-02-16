@@ -40,7 +40,6 @@ type Translations = {
   target: string;
   effects: string;
   noEffects: string;
-  effectX2: string;
   effectFreeze: string;
   effectWall: string;
   effectSlow: string;
@@ -127,7 +126,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Target",
     effects: "Effects",
     noEffects: "None",
-    effectX2: "x2",
     effectFreeze: "Freeze",
     effectWall: "Wall",
     effectSlow: "Slow",
@@ -184,7 +182,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalPowerUps: (count) => `Use ${count} power-ups`,
     powerUpActivated: {
       bomb: "Bomb triggered. Removed one letter.",
-      multiplier: "x2 activated.",
       freeze: "Freeze activated.",
       wall: "Wall activated.",
       slow: "Slow Time activated.",
@@ -193,7 +190,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     },
     powerUpHelp: {
       bomb: "Destroys one current flying letter.",
-      multiplier: "Doubles active letters (base x2).",
       freeze: "Freezes movement briefly.",
       wall: "Prevents letters from leaving for 15 seconds.",
       slow: "Slows all movement.",
@@ -230,7 +226,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Ziel",
     effects: "Effekte",
     noEffects: "Keine",
-    effectX2: "x2",
     effectFreeze: "Einfrieren",
     effectWall: "Mauer",
     effectSlow: "Zeitlupe",
@@ -287,7 +282,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalPowerUps: (count) => `${count} Power-ups nutzen`,
     powerUpActivated: {
       bomb: "Bombe ausgelöst. Ein Buchstabe entfernt.",
-      multiplier: "x2 aktiviert.",
       freeze: "Einfrieren aktiviert.",
       wall: "Mauer aktiviert.",
       slow: "Zeitlupe aktiviert.",
@@ -296,7 +290,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     },
     powerUpHelp: {
       bomb: "Entfernt einen aktuellen fliegenden Buchstaben.",
-      multiplier: "Verdoppelt aktive Buchstaben (Basis x2).",
       freeze: "Stoppt die Bewegung kurz.",
       wall: "Verhindert 15 Sekunden lang, dass Buchstaben das Feld verlassen.",
       slow: "Verlangsamt alle Bewegungen.",
@@ -333,7 +326,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Cible",
     effects: "Effets",
     noEffects: "Aucun",
-    effectX2: "x2",
     effectFreeze: "Gel",
     effectWall: "Mur",
     effectSlow: "Ralenti",
@@ -390,7 +382,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalPowerUps: (count) => `Utiliser ${count} bonus`,
     powerUpActivated: {
       bomb: "Bombe activée. Une lettre supprimée.",
-      multiplier: "x2 activé.",
       freeze: "Gel activé.",
       wall: "Mur activé.",
       slow: "Ralenti activé.",
@@ -399,7 +390,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     },
     powerUpHelp: {
       bomb: "Supprime une lettre volante actuelle.",
-      multiplier: "Double les lettres actives (base x2).",
       freeze: "Fige brièvement les mouvements.",
       wall: "Empêche les lettres de sortir pendant 15 secondes.",
       slow: "Ralentit tous les mouvements.",
@@ -436,7 +426,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Obiettivo",
     effects: "Effetti",
     noEffects: "Nessuno",
-    effectX2: "x2",
     effectFreeze: "Congelamento",
     effectWall: "Muro",
     effectSlow: "Rallentamento",
@@ -493,7 +482,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalPowerUps: (count) => `Usa ${count} power-up`,
     powerUpActivated: {
       bomb: "Bomba attivata. Una lettera rimossa.",
-      multiplier: "x2 attivato.",
       freeze: "Congelamento attivato.",
       wall: "Muro attivato.",
       slow: "Rallentamento attivato.",
@@ -502,7 +490,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     },
     powerUpHelp: {
       bomb: "Rimuove una lettera volante corrente.",
-      multiplier: "Raddoppia le lettere attive (base x2).",
       freeze: "Blocca i movimenti per poco.",
       wall: "Impedisce alle lettere di uscire per 15 secondi.",
       slow: "Rallenta tutti i movimenti.",
@@ -539,7 +526,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     target: "Цель",
     effects: "Эффекты",
     noEffects: "Нет",
-    effectX2: "x2",
     effectFreeze: "Заморозка",
     effectWall: "Стена",
     effectSlow: "Замедление",
@@ -596,7 +582,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalPowerUps: (count) => `Использовать ${count} бонуса`,
     powerUpActivated: {
       bomb: "Бомба активирована. Одна буква удалена.",
-      multiplier: "x2 активирован.",
       freeze: "Заморозка активирована.",
       wall: "Стена активирована.",
       slow: "Замедление активировано.",
@@ -605,7 +590,6 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     },
     powerUpHelp: {
       bomb: "Удаляет одну текущую летающую букву.",
-      multiplier: "Удваивает активные буквы (база x2).",
       freeze: "Временно останавливает движение.",
       wall: "Не даёт буквам покидать поле 15 секунд.",
       slow: "Замедляет все движения.",

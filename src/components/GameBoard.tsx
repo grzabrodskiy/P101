@@ -48,7 +48,12 @@ function rollGoalConfig(round: number): RoundGoalConfig {
 
 function wordLengthBonus(length: number): number {
   if (length <= 4) return 0;
-  return 2 ** (length - 4);
+  if (length === 5) return 4;
+  if (length === 6) return 8;
+  if (length === 7) return 16;
+  if (length === 8 || length === 9) return 32;
+  if (length === 10) return 64;
+  return 64 + (length - 10);
 }
 
 type GameBoardProps = {
@@ -112,19 +117,17 @@ export function GameBoard({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [explosionPulse, setExplosionPulse] = useState(false);
 
-  const [multiplierLeft, setMultiplierLeft] = useState(0);
   const [freezeLeft, setFreezeLeft] = useState(0);
   const [wallLeft, setWallLeft] = useState(0);
   const [slowLeft, setSlowLeft] = useState(0);
 
-  const isMultiplierActive = multiplierLeft > 0;
   const isFrozen = freezeLeft > 0;
   const isWallActive = wallLeft > 0;
   const isSlowActive = slowLeft > 0;
   const roundPaceMultiplier = 1 + (currentRound - 1) * ROUND_PACE_STEP;
   const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
-  const activeTileTarget = isMultiplierActive ? baseTileCount * 2 : baseTileCount;
+  const activeTileTarget = baseTileCount;
   const [goalConfig, setGoalConfig] = useState<RoundGoalConfig>(() => rollGoalConfig(1));
   const nextRoundGoalScore = rollGoalConfig(currentRound + 1).score;
 
@@ -170,7 +173,6 @@ export function GameBoard({
     setIsRefreshing(false);
     setExplosionPulse(false);
 
-    setMultiplierLeft(0);
     setFreezeLeft(0);
     setWallLeft(0);
     setSlowLeft(0);
@@ -277,7 +279,6 @@ export function GameBoard({
         return prev - 1;
       });
 
-      setMultiplierLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setFreezeLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setWallLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setSlowLeft((prev) => (prev > 0 ? prev - 1 : 0));
@@ -354,21 +355,17 @@ export function GameBoard({
 
   const activeEffects = useMemo(() => {
     const effects: string[] = [];
-    if (isMultiplierActive) effects.push(`${t.effectX2} ${multiplierLeft}s`);
     if (isFrozen) effects.push(`${t.effectFreeze} ${freezeLeft}s`);
     if (isWallActive) effects.push(`${t.effectWall} ${wallLeft}s`);
     if (isSlowActive) effects.push(`${t.effectSlow} ${slowLeft}s`);
     return effects;
   }, [
-    isMultiplierActive,
-    multiplierLeft,
     isFrozen,
     freezeLeft,
     isWallActive,
     wallLeft,
     isSlowActive,
     slowLeft,
-    t.effectX2,
     t.effectFreeze,
     t.effectWall,
     t.effectSlow
@@ -487,12 +484,6 @@ export function GameBoard({
       });
       setExplosionPulse(true);
       setStatus(t.powerUpActivated.bomb);
-      return;
-    }
-
-    if (kind === "multiplier") {
-      setMultiplierLeft(capDuration(POWERUP_META.multiplier.durationSeconds ?? 12));
-      setStatus(t.powerUpActivated.multiplier);
       return;
     }
 
@@ -661,6 +652,9 @@ export function GameBoard({
             isRunning={isRunning}
             isRefreshing={isRefreshing || isPaused}
             explosionPulse={explosionPulse}
+            isFreezeActive={isFrozen}
+            isWallActive={isWallActive}
+            isSlowActive={isSlowActive}
             feedbackBursts={feedbackBursts}
             onCollectTile={collectTile}
             onActivatePowerUp={activatePowerUp}

@@ -2,7 +2,6 @@ import type { PowerUpKind } from "../game/types";
 
 const POWERUP_ICON: Record<PowerUpKind, string> = {
   bomb: "💣",
-  multiplier: "✨",
   freeze: "🧊",
   wall: "🧱",
   slow: "🐢",
@@ -11,7 +10,6 @@ const POWERUP_ICON: Record<PowerUpKind, string> = {
 };
 
 const POWERUP_BADGE: Partial<Record<PowerUpKind, string>> = {
-  multiplier: "x2",
   "extra-time": "+10",
   "extra-time-15": "+15"
 };

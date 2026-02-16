@@ -34,19 +34,19 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Implemented Power-Ups
 - `💣 Bomb`: destroys one currently flying letter.
-- `x2 Multiplier`: doubles active letter target (`base * 2`) for `12s`.
 - `❄️ Freeze`: freezes movement for `5s`.
 - `🧱 Wall`: prevents existing letters from leaving the field for `15s` (new spawns still occur normally).
 - `⏳ Slow Time`: slows movement for `8s`.
 - `+10 Extra Time`: adds `10` seconds to round timer.
 - `+15 Extra Time`: adds `15` seconds to round timer.
+- Power-ups have stronger visual feedback:
+- Bomb triggers a larger animated blast effect.
+- Wall adds a temporary brick-style frame around the board.
+- Slow gives active letter tiles a turtle-themed look.
 
 ## Letter Count Rules
 - Base active letter count is configurable in options (`6`, `8`, `10`, `12`).
-- During active `x2`, target active letters is `base * 2`.
-- When `x2` ends, target returns to configured base count.
-- If current letter count is above target, extra letters are not force-removed.
-- Count naturally drains back to target via collection/expiration.
+- Active letter target always matches the configured base count.
 
 ## Bonus Tile Multipliers
 - Some letter tiles spawn with value modifiers similar to Scrabble bonuses:
@@ -123,7 +123,14 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 ## Scoring
 - Each letter uses language-specific Scrabble-like point values.
 - Word base score uses per-tile letter multipliers (`x2`/`x3`) before length bonus.
-- Length bonus is added: `+0` for `4` letters; for `5+`, bonus doubles each extra letter (`+2`, `+4`, `+8`, `+16`, ...).
+- Length bonus is added with custom progression:
+- `4`: `+0`
+- `5`: `+4`
+- `6`: `+8`
+- `7`: `+16`
+- `8` and `9`: `+32`
+- `10`: `+64`
+- `11+`: increases by `+1` per extra letter (`+65`, `+66`, ...).
 - Word multipliers (`x2`/`x3` word tiles) are applied after letter math: `(letter-score + length bonus) * (all word multipliers)`.
 - Multiple word multipliers stack multiplicatively (for example `x2 + x2 = x4`, `x2 + x3 = x6`).
 - Wildcard tile value is `0`.
