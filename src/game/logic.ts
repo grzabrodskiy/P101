@@ -81,6 +81,10 @@ const TOTAL_WEIGHT_BY_LANGUAGE: Record<LanguageCode, number> = Object.fromEntrie
 ) as Record<LanguageCode, number>;
 
 export function randomLetter(language: LanguageCode): { char: Letter; value: number } {
+  if (Math.random() < 0.02) {
+    return { char: "*", value: 0 };
+  }
+
   const entries = WEIGHTED_LETTERS_BY_LANGUAGE[language] ?? WEIGHTED_LETTERS_BY_LANGUAGE.en;
   const totalWeight = TOTAL_WEIGHT_BY_LANGUAGE[language] ?? TOTAL_WEIGHT_BY_LANGUAGE.en;
 
@@ -97,7 +101,7 @@ export function randomLetter(language: LanguageCode): { char: Letter; value: num
 }
 
 export function randomVelocity(speedMultiplier = 1): { vx: number; vy: number } {
-  const speed = (80 + Math.random() * 130) * speedMultiplier;
+  const speed = (72 + Math.random() * 112) * speedMultiplier;
   const angle = Math.random() * Math.PI * 2;
   return {
     vx: Math.cos(angle) * speed,
@@ -229,10 +233,22 @@ export function updateMovingEntity<T extends MovingEntity>(
 
 export function makeTile(id: number, language: LanguageCode, speedMultiplier = 1): Tile {
   const { char, value } = randomLetter(language);
+  const roll = char === "*" ? 1 : Math.random();
+  const modifiers =
+    roll < 0.06
+      ? { letterMultiplier: 2 as const }
+      : roll < 0.08
+        ? { letterMultiplier: 3 as const }
+        : roll < 0.13
+          ? { wordMultiplier: 2 as const }
+          : roll < 0.145
+            ? { wordMultiplier: 3 as const }
+            : {};
   return {
     ...spawnMovingEntity(id, TILE_SIZE, speedMultiplier),
     char,
-    value
+    value,
+    ...modifiers
   };
 }
 
@@ -246,7 +262,7 @@ export function randomPowerUpKind(): PowerUpKind {
     pick -= POWERUP_SPAWN_WEIGHTS[kind] ?? 1;
     if (pick <= 0) return kind;
   }
-  return "wild";
+  return "bomb";
 }
 
 export function makePowerUp(id: number, kind?: PowerUpKind, speedMultiplier = 1): PowerUp {

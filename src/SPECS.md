@@ -1,4 +1,4 @@
-# Word Bouncer Game Spec
+# Word Constructor Game Spec
 
 ## Goal
 Build words by tapping flying Scrabble-style letter tiles and submit valid words for points.
@@ -9,6 +9,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Game runs in timed rounds selected before start: `60s`, `90s`, or `120s` (`90s` default).
 - Base active letter count defaults to `8` and is configurable.
 - Letter tiles move continuously with velocity vectors.
+- Baseline tile speed is slightly reduced for better readability/control.
 - Letter tiles enter by crossing the boundary from outside the square.
 - On wall collision, a tile is reflected and wall-hit count increments.
 - A tile reflects for the configured number of wall hits (default `3`).
@@ -32,18 +33,13 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - All power-up effects are temporary: they either resolve naturally immediately, or expire within `30` seconds.
 
 ## Implemented Power-Ups
-- `💣 Bomb`: clears all letters and triggers explosion; letters repopulate one by one.
-- `x2 Multiplier`: doubles active letter target from `8` to `16` for `12s`.
+- `💣 Bomb`: destroys one currently flying letter.
+- `x2 Multiplier`: doubles active letter target (`base * 2`) for `12s`.
 - `❄️ Freeze`: freezes movement for `5s`.
-- `🛡️ Shield`: prevents tray backspace/clear for `10s`.
-- `* Wild`: adds wildcard tile to tray (`*`, value `0`).
-- `🔁 Reroll`: rerolls low-value letters (`1-point` letters).
+- `🧱 Wall`: prevents existing letters from leaving the field for `15s` (new spawns still occur normally).
 - `⏳ Slow Time`: slows movement for `8s`.
-- `DW Double Word`: doubles score of next valid submitted word, expires in `30s` if unused.
-- `🧲 Magnet`: letters drift toward pointer for `8s`.
 - `+10 Extra Time`: adds `10` seconds to round timer.
-- `🔒 Lock Letter`: next collected tray letter becomes locked; lock charges expire in `30s`.
-- `🧹 Purge Rare`: replaces high-value rare letters (`8+` points).
+- `+15 Extra Time`: adds `15` seconds to round timer.
 
 ## Letter Count Rules
 - Base active letter count is configurable in options (`6`, `8`, `10`, `12`).
@@ -52,12 +48,26 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - If current letter count is above target, extra letters are not force-removed.
 - Count naturally drains back to target via collection/expiration.
 
+## Bonus Tile Multipliers
+- Some letter tiles spawn with value modifiers similar to Scrabble bonuses:
+- `DL` (double letter): tile letter value is multiplied by `2`.
+- `TL` (triple letter): tile letter value is multiplied by `3`.
+- `DW` (double word): total built-word value is multiplied by `2`.
+- `TW` (triple word): total built-word value is multiplied by `3`.
+- `DL`/`TL` tiles are highlighted by border color (`blue`/`red`).
+- `DW`/`TW` tiles are highlighted by background color changes.
+- Bonus markers (`DL`, `TL`, `DW`, `TW`) are rendered on tiles.
+- Bonus properties persist when a tile is collected into the tray.
+
 ## Input and Interaction
 - User can collect a letter tile with mouse click or touch (pointer input).
 - Collected letter is removed from field and appended to tray.
 - Tray order defines submitted word order.
-- Controls include `Submit Word`, `Backspace`, `Clear`, and `Restart Round` / `Play Again`.
-- Locked tray letters cannot be removed by `Backspace`/`Clear`.
+- Selected letters are displayed as Scrabble-style tiles in tray.
+- Tray tiles show both letter glyph and point value.
+- Controls include `Submit Word`, `Backspace`, `Clear`, and `New Game` (full restart).
+- Main action controls are icon buttons with localized tooltips/labels.
+- Submit/Backspace/Clear/Restart actions are arranged in one row of compact square icon buttons.
 
 ## Menu
 - A top-level in-game menu is available from a menu button.
@@ -65,7 +75,6 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - `Pause/Resume`: toggles gameplay/timer progression.
 - `Options`: opens a popup for game options.
 - `Help`: opens a popup with quick gameplay instructions and power-up descriptions.
-- `Restart Round`: resets round state with current options.
 - `New Game`: starts a fresh game session from zero with current options.
 - While paused, gameplay interactions are disabled until resume.
 
@@ -92,7 +101,10 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Help Popup
 - Help is shown as a modal popup opened from the in-game menu.
+- Opening Help pauses gameplay/timer.
 - Popup includes a brief "how to play" section.
+- Popup includes scoring guidance for `DL`/`TL` and `DW`/`TW` behavior.
+- Popup includes round progression and round-fail conditions.
 - Popup lists all power-ups with icon/label and effect description.
 - Help content is localized with the currently selected game language.
 
@@ -100,15 +112,17 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Submitted word must be at least `4` characters.
 - Validation is performed against a dictionary API using the selected language locale.
 - There is no local fallback dictionary; if API lookup fails, word validation fails.
+- Wildcard (`*`) letter tiles spawn naturally with low Scrabble-like frequency.
 - Wildcard words are evaluated by trying dictionary-valid substitutions.
 - Invalid words do not score and tray remains unchanged.
 
 ## Scoring
 - Each letter uses language-specific Scrabble-like point values.
-- Word score is sum of tray letter values at submit time.
+- Word base score uses per-tile letter multipliers (`DL`/`TL`) before length bonus.
 - Length bonus is added: `+0` for `4` letters; for `5+`, bonus doubles each extra letter (`+2`, `+4`, `+8`, `+16`, ...).
+- Word multipliers (`DW`/`TW`) are applied after letter math: `(letter-score + length bonus) * (all word multipliers)`.
+- Multiple word multipliers stack multiplicatively (for example `DW + DW = x4`, `DW + TW = x6`).
 - Wildcard tile value is `0`.
-- If `DW` is active, next valid word score is doubled.
 - Combo scoring is active:
 - valid submits within `8s` chain combo;
 - combo multiplier starts at `x1.00`, increases by `+0.25` per chain step, capped at `x2.00`;
@@ -117,7 +131,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Score is cumulative across endless rounds until user starts a new game.
 
 ## UI Requirements
-- Show current total score.
+- Show round score progress and total score as separate counters in HUD.
 - Show time remaining in seconds.
 - Show active flying letter count.
 - Show active effect states/timers.
@@ -126,6 +140,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Show status messages for game events and validation.
 - Status message is displayed directly below the game board.
 - Show tray word and computed points.
+- Show selected tray letters as individual tiles with per-letter values and tile bonus marker when present.
 - Show accepted words list with points.
 - Show current round number in HUD.
 - Show score-goal progress in HUD as `current/target`.
@@ -133,7 +148,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Combo HUD value pulses when combo increases.
 - Show between-round overlay with round goal completion bonus summary.
 - Successful submits show floating in-field score popups (and combo popup when combo increases).
-- Power-ups use a unified icon system (emoji glyph + optional mini badge like `x2`, `DW`, `+10`) in-field and in Help.
+- Power-ups use a unified icon system (emoji glyph + optional mini badge like `x2`, `+10`, `+15`) in-field and in Help.
 - Power-up circles are color-coded with distinct gradients and subtle glow to improve at-a-glance recognition.
 - On desktop, controls/tray are to the right of the square.
 - On smaller screens, layout stacks vertically and remains touch-friendly.

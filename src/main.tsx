@@ -27,7 +27,7 @@ class RootErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundar
     if (!this.state.hasError) return this.props.children;
     return (
       <main className="app">
-        <h1>Word Bouncer</h1>
+        <h1>Word Constructor</h1>
         <p className="status">Render error: {this.state.message}</p>
       </main>
     );
@@ -47,7 +47,7 @@ try {
   );
 } catch (error) {
   const message = error instanceof Error ? error.message : "Unknown startup error";
-  rootElement.innerHTML = `<main style="padding:16px;font-family:Arial,sans-serif"><h1>Word Bouncer</h1><p>Startup error: ${message}</p></main>`;
+  rootElement.innerHTML = `<main style="padding:16px;font-family:Arial,sans-serif"><h1>Word Constructor</h1><p>Startup error: ${message}</p></main>`;
   // Keep this console log for local debugging.
   console.error(error);
 }

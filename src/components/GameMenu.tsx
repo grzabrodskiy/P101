@@ -6,7 +6,6 @@ type GameMenuProps = {
   onPauseResume: () => void;
   onOpenOptions: () => void;
   onOpenHelp: () => void;
-  onRestartRound: () => void;
   onNewGame: () => void;
   labels: {
     menuButton: string;
@@ -15,7 +14,6 @@ type GameMenuProps = {
     help: string;
     pause: string;
     resume: string;
-    restartRound: string;
     newGame: string;
     closeMenu: string;
   };
@@ -29,7 +27,6 @@ export function GameMenu({
   onPauseResume,
   onOpenOptions,
   onOpenHelp,
-  onRestartRound,
   onNewGame,
   labels
 }: GameMenuProps) {
@@ -42,23 +39,25 @@ export function GameMenu({
       {isOpen && (
         <div className="menuPanel">
           <h2>{labels.menuTitle}</h2>
-          <button type="button" onClick={onPauseResume} disabled={!isRunning}>
-            {isPaused ? labels.resume : labels.pause}
+          <button type="button" className="menuAction" onClick={onPauseResume} disabled={!isRunning}>
+            <span className="menuActionIcon" aria-hidden="true">{isPaused ? "▶" : "⏸"}</span>
+            <span>{isPaused ? labels.resume : labels.pause}</span>
           </button>
-          <button type="button" onClick={onOpenOptions}>
-            {labels.options}
+          <button type="button" className="menuAction" onClick={onOpenOptions}>
+            <span className="menuActionIcon" aria-hidden="true">⚙️</span>
+            <span>{labels.options}</span>
           </button>
-          <button type="button" onClick={onOpenHelp}>
-            {labels.help}
+          <button type="button" className="menuAction" onClick={onOpenHelp}>
+            <span className="menuActionIcon" aria-hidden="true">❓</span>
+            <span>{labels.help}</span>
           </button>
-          <button type="button" onClick={onRestartRound}>
-            {labels.restartRound}
+          <button type="button" className="menuAction" onClick={onNewGame}>
+            <span className="menuActionIcon" aria-hidden="true">↻</span>
+            <span>{labels.newGame}</span>
           </button>
-          <button type="button" onClick={onNewGame}>
-            {labels.newGame}
-          </button>
-          <button type="button" onClick={onToggle}>
-            {labels.closeMenu}
+          <button type="button" className="menuAction" onClick={onToggle}>
+            <span className="menuActionIcon" aria-hidden="true">✕</span>
+            <span>{labels.closeMenu}</span>
           </button>
         </div>
       )}

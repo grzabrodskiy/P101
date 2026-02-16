@@ -13,6 +13,12 @@ type HelpModalProps = {
     lineTapLetters: string;
     lineSubmitValid: string;
     linePowerUps: string;
+    scoringTitle: string;
+    lineBonusTiles: string;
+    lineWordMultiplierStack: string;
+    roundsTitle: string;
+    lineRoundsGoal: string;
+    lineRoundsEnd: string;
     powerUpsTitle: string;
     close: string;
   };
@@ -44,6 +50,18 @@ export function HelpModal({
           <li>{labels.lineTapLetters}</li>
           <li>{labels.lineSubmitValid}</li>
           <li>{labels.linePowerUps}</li>
+        </ul>
+
+        <h3>{labels.scoringTitle}</h3>
+        <ul>
+          <li>{labels.lineBonusTiles}</li>
+          <li>{labels.lineWordMultiplierStack}</li>
+        </ul>
+
+        <h3>{labels.roundsTitle}</h3>
+        <ul>
+          <li>{labels.lineRoundsGoal}</li>
+          <li>{labels.lineRoundsEnd}</li>
         </ul>
 
         <h3>{labels.powerUpsTitle}</h3>

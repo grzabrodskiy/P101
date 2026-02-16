@@ -32,6 +32,7 @@ type Translations = {
   noneYet: string;
   trayPlaceholder: string;
   wordPoints: string;
+  roundScore: string;
   totalScore: string;
   round: string;
   combo: string;
@@ -42,11 +43,8 @@ type Translations = {
   noEffects: string;
   effectX2: string;
   effectFreeze: string;
-  effectShield: string;
+  effectWall: string;
   effectSlow: string;
-  effectMagnet: string;
-  effectDoubleWord: string;
-  effectLock: string;
   language: string;
   languageSetupTitle: string;
   roundDuration: string;
@@ -80,11 +78,16 @@ type Translations = {
   helpLineTapLetters: string;
   helpLineSubmitValid: string;
   helpLinePowerUps: string;
+  helpScoringTitle: string;
+  helpLineBonusTiles: string;
+  helpLineWordMultiplierStack: string;
+  helpRoundsTitle: string;
+  helpLineRoundsGoal: string;
+  helpLineRoundsEnd: string;
   helpPowerUpsTitle: string;
   closeHelp: string;
   pausedStatus: string;
   statusChecking: (word: string) => string;
-  doubleWordSuffix: string;
   comboSuffix: (multiplier: number) => string;
   statusRoundBonus: (completed: number, total: number, bonus: number) => string;
   statusScoreRequired: (points: number) => string;
@@ -98,7 +101,7 @@ type Translations = {
 
 export const UI_TEXT: Record<LanguageCode, Translations> = {
   en: {
-    title: "Word Bouncer",
+    title: "Word Constructor",
     initialStatus: "Tap flying letters to build a word.",
     timeUpStatus: "Time is up. Submit again after restart.",
     bombRefreshComplete: "Bomb refresh complete.",
@@ -118,7 +121,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "None yet",
     trayPlaceholder: "Tap letters to build a word",
     wordPoints: "Word Points",
-    totalScore: "Score",
+    roundScore: "Round Score",
+    totalScore: "Total Score",
     round: "Round",
     combo: "Combo",
     timeLeft: "Time Left",
@@ -128,11 +132,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noEffects: "None",
     effectX2: "x2",
     effectFreeze: "Freeze",
-    effectShield: "Shield",
+    effectWall: "Wall",
     effectSlow: "Slow",
-    effectMagnet: "Magnet",
-    effectDoubleWord: "Double Word",
-    effectLock: "Lock",
     language: "Language",
     languageSetupTitle: "Choose language for this round",
     roundDuration: "Round Duration",
@@ -167,11 +168,16 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLineTapLetters: "Each tile bounces off walls 3 times, then exits.",
     helpLineSubmitValid: "Submit words with at least 4 letters.",
     helpLinePowerUps: "Tap moving round power-ups to activate effects.",
+    helpScoringTitle: "Scoring",
+    helpLineBonusTiles: "DL/TL multiply letter value first; DW/TW multiply the whole word.",
+    helpLineWordMultiplierStack: "Multiple DW/TW tiles stack (for example DW + DW = x4).",
+    helpRoundsTitle: "Rounds",
+    helpLineRoundsGoal: "Each round has a score target (45, 60, 75, ...).",
+    helpLineRoundsEnd: "If you miss the target when time ends, the run is over.",
     helpPowerUpsTitle: "Power-Ups",
     closeHelp: "Close",
     pausedStatus: "Game paused.",
     statusChecking: (word) => `Checking "${word}"...`,
-    doubleWordSuffix: " with Double Word",
     comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Goals completed ${completed}/${total}. Bonus +${bonus}.`,
@@ -181,36 +187,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Make ${count} words of ${minLength}+ letters`,
     goalPowerUps: (count) => `Use ${count} power-ups`,
     powerUpActivated: {
-      bomb: "Bomb triggered. Refreshing letters...",
+      bomb: "Bomb triggered. Removed one letter.",
       multiplier: "x2 activated.",
       freeze: "Freeze activated.",
-      shield: "Shield activated.",
-      wild: "Wildcard added to tray.",
-      reroll: "Rerolled low-value letters.",
+      wall: "Wall activated.",
       slow: "Slow Time activated.",
-      double: "Double Word ready for next valid submit.",
-      magnet: "Magnet activated.",
       "extra-time": "+10 seconds added.",
-      lock: "Lock charge added to next collected letter.",
-      purge: "Purged rare letters."
+      "extra-time-15": "+15 seconds added."
     },
     powerUpHelp: {
-      bomb: "Explodes all letters and refreshes the board.",
-      multiplier: "Doubles active letters to 16.",
+      bomb: "Destroys one current flying letter.",
+      multiplier: "Doubles active letters (base x2).",
       freeze: "Freezes movement briefly.",
-      shield: "Protects tray from backspace/clear.",
-      wild: "Adds wildcard tile to tray.",
-      reroll: "Rerolls low-value letters.",
+      wall: "Prevents letters from leaving for 15 seconds.",
       slow: "Slows all movement.",
-      double: "Next valid word gets double points.",
-      magnet: "Letters drift toward pointer.",
       "extra-time": "Adds 10 seconds.",
-      lock: "Next collected letter is locked in tray.",
-      purge: "Replaces high-value rare letters."
+      "extra-time-15": "Adds 15 seconds."
     }
   },
   de: {
-    title: "Word Bouncer",
+    title: "Word Constructor",
     initialStatus: "Tippe auf fliegende Buchstaben, um ein Wort zu bilden.",
     timeUpStatus: "Zeit ist abgelaufen. Nach Neustart erneut einreichen.",
     bombRefreshComplete: "Bomben-Aktualisierung abgeschlossen.",
@@ -230,6 +226,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Noch keine",
     trayPlaceholder: "Tippe Buchstaben, um ein Wort zu bilden",
     wordPoints: "Wortpunkte",
+    roundScore: "Rundenpunkte",
     totalScore: "Gesamtpunkte",
     round: "Runde",
     combo: "Combo",
@@ -240,11 +237,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noEffects: "Keine",
     effectX2: "x2",
     effectFreeze: "Einfrieren",
-    effectShield: "Schild",
+    effectWall: "Mauer",
     effectSlow: "Zeitlupe",
-    effectMagnet: "Magnet",
-    effectDoubleWord: "Doppelwort",
-    effectLock: "Sperre",
     language: "Sprache",
     languageSetupTitle: "Sprache fur diese Runde auswahlen",
     roundDuration: "Rundendauer",
@@ -279,11 +273,16 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLineTapLetters: "Jeder Stein prallt 3-mal ab und verlässt dann das Feld.",
     helpLineSubmitValid: "Reiche Wörter mit mindestens 4 Buchstaben ein.",
     helpLinePowerUps: "Tippe auf runde Power-ups, um Effekte zu aktivieren.",
+    helpScoringTitle: "Punkte",
+    helpLineBonusTiles: "DL/TL multiplizieren zuerst den Buchstabenwert; DW/TW multiplizieren das ganze Wort.",
+    helpLineWordMultiplierStack: "Mehrere DW/TW-Felder stapeln sich (z. B. DW + DW = x4).",
+    helpRoundsTitle: "Runden",
+    helpLineRoundsGoal: "Jede Runde hat ein Punkteziel (45, 60, 75, ...).",
+    helpLineRoundsEnd: "Wenn das Ziel bei Zeitablauf verfehlt wird, ist der Lauf vorbei.",
     helpPowerUpsTitle: "Power-ups",
     closeHelp: "Schließen",
     pausedStatus: "Spiel pausiert.",
     statusChecking: (word) => `Prüfe "${word}"...`,
-    doubleWordSuffix: " mit Doppelwort",
     comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Ziele erreicht ${completed}/${total}. Bonus +${bonus}.`,
@@ -293,36 +292,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `${count} Wörter mit ${minLength}+ Buchstaben`,
     goalPowerUps: (count) => `${count} Power-ups nutzen`,
     powerUpActivated: {
-      bomb: "Bombe ausgelöst. Buchstaben werden aktualisiert...",
+      bomb: "Bombe ausgelöst. Ein Buchstabe entfernt.",
       multiplier: "x2 aktiviert.",
       freeze: "Einfrieren aktiviert.",
-      shield: "Schild aktiviert.",
-      wild: "Joker zur Ablage hinzugefügt.",
-      reroll: "Niedrige Buchstaben neu gewürfelt.",
+      wall: "Mauer aktiviert.",
       slow: "Zeitlupe aktiviert.",
-      double: "Doppelwort für die nächste gültige Einreichung bereit.",
-      magnet: "Magnet aktiviert.",
       "extra-time": "+10 Sekunden hinzugefügt.",
-      lock: "Sperr-Ladung für den nächsten Buchstaben hinzugefügt.",
-      purge: "Seltene Buchstaben entfernt."
+      "extra-time-15": "+15 Sekunden hinzugefügt."
     },
     powerUpHelp: {
-      bomb: "Lässt alle Buchstaben explodieren und erneuert das Feld.",
-      multiplier: "Verdoppelt aktive Buchstaben auf 16.",
+      bomb: "Entfernt einen aktuellen fliegenden Buchstaben.",
+      multiplier: "Verdoppelt aktive Buchstaben (Basis x2).",
       freeze: "Stoppt die Bewegung kurz.",
-      shield: "Schützt die Ablage vor Löschen.",
-      wild: "Fügt einen Joker zur Ablage hinzu.",
-      reroll: "Würfelt Niedrigwert-Buchstaben neu.",
+      wall: "Verhindert 15 Sekunden lang, dass Buchstaben das Feld verlassen.",
       slow: "Verlangsamt alle Bewegungen.",
-      double: "Nächstes gültiges Wort zählt doppelt.",
-      magnet: "Buchstaben bewegen sich zum Zeiger.",
       "extra-time": "Fügt 10 Sekunden hinzu.",
-      lock: "Nächster gesammelter Buchstabe wird gesperrt.",
-      purge: "Ersetzt seltene Hochwert-Buchstaben."
+      "extra-time-15": "Fügt 15 Sekunden hinzu."
     }
   },
   fr: {
-    title: "Word Bouncer",
+    title: "Word Constructor",
     initialStatus: "Touchez les lettres volantes pour former un mot.",
     timeUpStatus: "Le temps est écoulé. Recommencez puis soumettez.",
     bombRefreshComplete: "Rafraîchissement de la bombe terminé.",
@@ -342,6 +331,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Aucun",
     trayPlaceholder: "Touchez des lettres pour former un mot",
     wordPoints: "Points du mot",
+    roundScore: "Score manche",
     totalScore: "Score total",
     round: "Manche",
     combo: "Combo",
@@ -352,11 +342,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noEffects: "Aucun",
     effectX2: "x2",
     effectFreeze: "Gel",
-    effectShield: "Bouclier",
+    effectWall: "Mur",
     effectSlow: "Ralenti",
-    effectMagnet: "Aimant",
-    effectDoubleWord: "Mot double",
-    effectLock: "Verrou",
     language: "Langue",
     languageSetupTitle: "Choisissez la langue pour ce tour",
     roundDuration: "Duree du tour",
@@ -391,11 +378,16 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLineTapLetters: "Chaque tuile rebondit 3 fois puis sort.",
     helpLineSubmitValid: "Validez des mots d'au moins 4 lettres.",
     helpLinePowerUps: "Touchez les bonus ronds en mouvement pour activer les effets.",
+    helpScoringTitle: "Score",
+    helpLineBonusTiles: "DL/TL multiplient d'abord la lettre; DW/TW multiplient le mot entier.",
+    helpLineWordMultiplierStack: "Plusieurs DW/TW se cumulent (par ex. DW + DW = x4).",
+    helpRoundsTitle: "Manches",
+    helpLineRoundsGoal: "Chaque manche a un objectif de score (45, 60, 75, ...).",
+    helpLineRoundsEnd: "Si l'objectif n'est pas atteint à la fin du temps, la partie se termine.",
     helpPowerUpsTitle: "Bonus",
     closeHelp: "Fermer",
     pausedStatus: "Jeu en pause.",
     statusChecking: (word) => `Vérification de "${word}"...`,
-    doubleWordSuffix: " avec Mot double",
     comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Objectifs atteints ${completed}/${total}. Bonus +${bonus}.`,
@@ -405,36 +397,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Faire ${count} mots de ${minLength}+ lettres`,
     goalPowerUps: (count) => `Utiliser ${count} bonus`,
     powerUpActivated: {
-      bomb: "Bombe activée. Rafraîchissement des lettres...",
+      bomb: "Bombe activée. Une lettre supprimée.",
       multiplier: "x2 activé.",
       freeze: "Gel activé.",
-      shield: "Bouclier activé.",
-      wild: "Joker ajouté au plateau.",
-      reroll: "Lettres faibles relancées.",
+      wall: "Mur activé.",
       slow: "Ralenti activé.",
-      double: "Mot double prêt pour la prochaine validation.",
-      magnet: "Aimant activé.",
       "extra-time": "+10 secondes ajoutées.",
-      lock: "Charge de verrou ajoutée pour la prochaine lettre.",
-      purge: "Lettres rares purgées."
+      "extra-time-15": "+15 secondes ajoutées."
     },
     powerUpHelp: {
-      bomb: "Fait exploser toutes les lettres et rafraîchit le plateau.",
-      multiplier: "Double les lettres actives à 16.",
+      bomb: "Supprime une lettre volante actuelle.",
+      multiplier: "Double les lettres actives (base x2).",
       freeze: "Fige brièvement les mouvements.",
-      shield: "Protège le plateau de retour/effacer.",
-      wild: "Ajoute un joker au plateau.",
-      reroll: "Relance les lettres de faible valeur.",
+      wall: "Empêche les lettres de sortir pendant 15 secondes.",
       slow: "Ralentit tous les mouvements.",
-      double: "Le prochain mot valide vaut le double.",
-      magnet: "Les lettres dérivent vers le pointeur.",
       "extra-time": "Ajoute 10 secondes.",
-      lock: "La prochaine lettre collectée est verrouillée.",
-      purge: "Remplace les lettres rares de forte valeur."
+      "extra-time-15": "Ajoute 15 secondes."
     }
   },
   it: {
-    title: "Word Bouncer",
+    title: "Word Constructor",
     initialStatus: "Tocca le lettere volanti per formare una parola.",
     timeUpStatus: "Tempo scaduto. Riavvia e invia di nuovo.",
     bombRefreshComplete: "Aggiornamento bomba completato.",
@@ -454,6 +436,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Nessuna",
     trayPlaceholder: "Tocca le lettere per formare una parola",
     wordPoints: "Punti parola",
+    roundScore: "Punteggio round",
     totalScore: "Punteggio totale",
     round: "Round",
     combo: "Combo",
@@ -464,11 +447,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noEffects: "Nessuno",
     effectX2: "x2",
     effectFreeze: "Congelamento",
-    effectShield: "Scudo",
+    effectWall: "Muro",
     effectSlow: "Rallentamento",
-    effectMagnet: "Magnete",
-    effectDoubleWord: "Parola doppia",
-    effectLock: "Blocco",
     language: "Lingua",
     languageSetupTitle: "Scegli la lingua per questo round",
     roundDuration: "Durata round",
@@ -503,11 +483,16 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLineTapLetters: "Ogni tessera rimbalza 3 volte e poi esce.",
     helpLineSubmitValid: "Invia parole con almeno 4 lettere.",
     helpLinePowerUps: "Tocca i power-up rotondi in movimento per attivare gli effetti.",
+    helpScoringTitle: "Punteggio",
+    helpLineBonusTiles: "DL/TL moltiplicano prima la lettera; DW/TW moltiplicano l'intera parola.",
+    helpLineWordMultiplierStack: "Più caselle DW/TW si combinano (es. DW + DW = x4).",
+    helpRoundsTitle: "Round",
+    helpLineRoundsGoal: "Ogni round ha un obiettivo punteggio (45, 60, 75, ...).",
+    helpLineRoundsEnd: "Se non raggiungi l'obiettivo allo scadere del tempo, la partita finisce.",
     helpPowerUpsTitle: "Power-up",
     closeHelp: "Chiudi",
     pausedStatus: "Gioco in pausa.",
     statusChecking: (word) => `Controllo "${word}"...`,
-    doubleWordSuffix: " con Parola doppia",
     comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Obiettivi completati ${completed}/${total}. Bonus +${bonus}.`,
@@ -517,36 +502,26 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Fai ${count} parole da ${minLength}+ lettere`,
     goalPowerUps: (count) => `Usa ${count} power-up`,
     powerUpActivated: {
-      bomb: "Bomba attivata. Aggiornamento lettere...",
+      bomb: "Bomba attivata. Una lettera rimossa.",
       multiplier: "x2 attivato.",
       freeze: "Congelamento attivato.",
-      shield: "Scudo attivato.",
-      wild: "Jolly aggiunto al vassoio.",
-      reroll: "Lettere a basso valore rilanciate.",
+      wall: "Muro attivato.",
       slow: "Rallentamento attivato.",
-      double: "Parola doppia pronta per il prossimo invio valido.",
-      magnet: "Magnete attivato.",
       "extra-time": "+10 secondi aggiunti.",
-      lock: "Carica blocco aggiunta alla prossima lettera.",
-      purge: "Lettere rare eliminate."
+      "extra-time-15": "+15 secondi aggiunti."
     },
     powerUpHelp: {
-      bomb: "Fa esplodere tutte le lettere e aggiorna il campo.",
-      multiplier: "Raddoppia le lettere attive a 16.",
+      bomb: "Rimuove una lettera volante corrente.",
+      multiplier: "Raddoppia le lettere attive (base x2).",
       freeze: "Blocca i movimenti per poco.",
-      shield: "Protegge il vassoio da indietro/cancella.",
-      wild: "Aggiunge un jolly al vassoio.",
-      reroll: "Rimescola lettere a basso valore.",
+      wall: "Impedisce alle lettere di uscire per 15 secondi.",
       slow: "Rallenta tutti i movimenti.",
-      double: "La prossima parola valida vale doppio.",
-      magnet: "Le lettere si avvicinano al puntatore.",
       "extra-time": "Aggiunge 10 secondi.",
-      lock: "La prossima lettera raccolta viene bloccata.",
-      purge: "Sostituisce lettere rare di alto valore."
+      "extra-time-15": "Aggiunge 15 secondi."
     }
   },
   ru: {
-    title: "Word Bouncer",
+    title: "Word Constructor",
     initialStatus: "Нажимайте на летающие буквы, чтобы собрать слово.",
     timeUpStatus: "Время вышло. Перезапустите и отправьте снова.",
     bombRefreshComplete: "Обновление после бомбы завершено.",
@@ -566,6 +541,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Пока нет",
     trayPlaceholder: "Нажимайте буквы, чтобы собрать слово",
     wordPoints: "Очки слова",
+    roundScore: "Счёт раунда",
     totalScore: "Общий счёт",
     round: "Раунд",
     combo: "Комбо",
@@ -576,11 +552,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noEffects: "Нет",
     effectX2: "x2",
     effectFreeze: "Заморозка",
-    effectShield: "Щит",
+    effectWall: "Стена",
     effectSlow: "Замедление",
-    effectMagnet: "Магнит",
-    effectDoubleWord: "Двойное слово",
-    effectLock: "Блок",
     language: "Язык",
     languageSetupTitle: "Выберите язык для раунда",
     roundDuration: "Длительность раунда",
@@ -615,11 +588,16 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLineTapLetters: "Каждая плитка отскакивает от стен 3 раза, затем уходит.",
     helpLineSubmitValid: "Отправляйте слова длиной не менее 4 букв.",
     helpLinePowerUps: "Нажимайте на круглые бонусы, чтобы активировать эффекты.",
+    helpScoringTitle: "Подсчёт очков",
+    helpLineBonusTiles: "DL/TL сначала умножают цену буквы; DW/TW умножают всё слово.",
+    helpLineWordMultiplierStack: "Несколько DW/TW перемножаются (например, DW + DW = x4).",
+    helpRoundsTitle: "Раунды",
+    helpLineRoundsGoal: "В каждом раунде есть цель по очкам (45, 60, 75, ...).",
+    helpLineRoundsEnd: "Если цель не достигнута к концу времени, забег заканчивается.",
     helpPowerUpsTitle: "Бонусы",
     closeHelp: "Закрыть",
     pausedStatus: "Игра на паузе.",
     statusChecking: (word) => `Проверка "${word}"...`,
-    doubleWordSuffix: " с Двойным словом",
     comboSuffix: (multiplier) => ` x${multiplier.toFixed(2)}`,
     statusRoundBonus: (completed, total, bonus) =>
       `Цели выполнены ${completed}/${total}. Бонус +${bonus}.`,
@@ -629,32 +607,22 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Собрать ${count} слов по ${minLength}+ букв`,
     goalPowerUps: (count) => `Использовать ${count} бонуса`,
     powerUpActivated: {
-      bomb: "Бомба активирована. Обновляем буквы...",
+      bomb: "Бомба активирована. Одна буква удалена.",
       multiplier: "x2 активирован.",
       freeze: "Заморозка активирована.",
-      shield: "Щит активирован.",
-      wild: "Джокер добавлен в лоток.",
-      reroll: "Буквы низкой ценности перемешаны.",
+      wall: "Стена активирована.",
       slow: "Замедление активировано.",
-      double: "Двойное слово готово для следующей валидной отправки.",
-      magnet: "Магнит активирован.",
       "extra-time": "+10 секунд добавлено.",
-      lock: "Заряд блокировки добавлен для следующей буквы.",
-      purge: "Редкие буквы удалены."
+      "extra-time-15": "+15 секунд добавлено."
     },
     powerUpHelp: {
-      bomb: "Взрывает все буквы и обновляет поле.",
-      multiplier: "Удваивает активные буквы до 16.",
+      bomb: "Удаляет одну текущую летающую букву.",
+      multiplier: "Удваивает активные буквы (база x2).",
       freeze: "Временно останавливает движение.",
-      shield: "Защищает лоток от удаления и очистки.",
-      wild: "Добавляет джокер в лоток.",
-      reroll: "Перезапускает буквы с низкой ценностью.",
+      wall: "Не даёт буквам покидать поле 15 секунд.",
       slow: "Замедляет все движения.",
-      double: "Следующее валидное слово даст двойные очки.",
-      magnet: "Буквы тянутся к указателю.",
       "extra-time": "Добавляет 10 секунд.",
-      lock: "Следующая собранная буква будет заблокирована.",
-      purge: "Заменяет редкие дорогие буквы."
+      "extra-time-15": "Добавляет 15 секунд."
     }
   }
 };

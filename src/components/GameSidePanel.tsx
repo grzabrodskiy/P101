@@ -2,15 +2,14 @@ import type { SubmittedWord, TrayTile } from "../game/types";
 
 type GameSidePanelProps = {
   tray: TrayTile[];
-  trayWord: string;
   trayBaseScore: number;
   trayLengthBonus: number;
+  trayWordMultiplier: number;
   trayScore: number;
   isChecking: boolean;
   submitDisabled: boolean;
   isRunning: boolean;
   isRefreshing: boolean;
-  isShieldActive: boolean;
   activeEffects: string[];
   submittedWords: SubmittedWord[];
   onSubmitWord: () => void;
@@ -35,15 +34,14 @@ type GameSidePanelProps = {
 
 export function GameSidePanel({
   tray,
-  trayWord,
   trayBaseScore,
   trayLengthBonus,
+  trayWordMultiplier,
   trayScore,
   isChecking,
   submitDisabled,
   isRunning,
   isRefreshing,
-  isShieldActive,
   activeEffects,
   submittedWords,
   onSubmitWord,
@@ -55,12 +53,46 @@ export function GameSidePanel({
   return (
     <section className="sidePanel">
       <section className="tray" aria-label="Word builder">
-        <div className="trayWord">{trayWord || labels.trayPlaceholder}</div>
+        {tray.length === 0 ? (
+          <div className="trayWord">{labels.trayPlaceholder}</div>
+        ) : (
+          <div className="trayTiles">
+            {tray.map((tile) => {
+              const tileClasses = [
+                "trayTile",
+                tile.letterMultiplier === 2 ? "tile-double-letter" : "",
+                tile.letterMultiplier === 3 ? "tile-triple-letter" : "",
+                tile.wordMultiplier === 2 ? "tile-double-word" : "",
+                tile.wordMultiplier === 3 ? "tile-triple-word" : "",
+                tile.locked ? "trayTile-locked" : ""
+              ]
+                .filter(Boolean)
+                .join(" ");
+
+              const modifierBadge = tile.letterMultiplier
+                ? `${tile.letterMultiplier === 2 ? "D" : "T"}L`
+                : tile.wordMultiplier
+                  ? `${tile.wordMultiplier === 2 ? "D" : "T"}W`
+                  : null;
+
+              return (
+                <span key={tile.id} className={tileClasses}>
+                  <span className="letter">{tile.char}</span>
+                  <span className="value">{tile.value}</span>
+                  {modifierBadge ? <span className="tileModifier">{modifierBadge}</span> : null}
+                </span>
+              );
+            })}
+          </div>
+        )}
         <div className="trayScore">
           {labels.wordPoints}: {trayScore}
-          {trayLengthBonus > 0 ? (
-            <span className="trayScoreDetails"> ({trayBaseScore}+{trayLengthBonus})</span>
-          ) : null}
+          <span className="trayScoreDetails">
+            {" "}
+            ({trayBaseScore}
+            {trayLengthBonus > 0 ? `+${trayLengthBonus}` : ""}
+            {trayWordMultiplier > 1 ? ` x${trayWordMultiplier}` : ""})
+          </span>
         </div>
       </section>
 
@@ -69,28 +101,46 @@ export function GameSidePanel({
           type="button"
           onClick={onSubmitWord}
           disabled={submitDisabled}
+          title={isChecking ? labels.checking : labels.submitWord}
+          aria-label={isChecking ? labels.checking : labels.submitWord}
+          className="iconButton"
         >
-          {isChecking ? labels.checking : labels.submitWord}
+          <span className="iconGlyph" aria-hidden="true">{isChecking ? "⏳" : "✅"}</span>
+          <span className="iconText">{labels.submitWord}</span>
         </button>
         <button
           type="button"
           onClick={onBackspace}
-          disabled={tray.length === 0 || !isRunning || isRefreshing || isShieldActive}
+          disabled={tray.length === 0 || !isRunning || isRefreshing}
+          title={labels.backspace}
+          aria-label={labels.backspace}
+          className="iconButton"
         >
-          {labels.backspace}
+          <span className="iconGlyph" aria-hidden="true">⌫</span>
+          <span className="iconText">{labels.backspace}</span>
         </button>
         <button
           type="button"
           onClick={onClear}
-          disabled={tray.length === 0 || !isRunning || isRefreshing || isShieldActive}
+          disabled={tray.length === 0 || !isRunning || isRefreshing}
+          title={labels.clear}
+          aria-label={labels.clear}
+          className="iconButton"
         >
-          {labels.clear}
+          <span className="iconGlyph" aria-hidden="true">🧹</span>
+          <span className="iconText">{labels.clear}</span>
+        </button>
+        <button
+          type="button"
+          className="restartButton iconButton"
+          onClick={onRestart}
+          title={isRunning ? labels.restartRound : labels.playAgain}
+          aria-label={isRunning ? labels.restartRound : labels.playAgain}
+        >
+          <span className="iconGlyph" aria-hidden="true">↻</span>
+          <span className="iconText">{isRunning ? labels.restartRound : labels.playAgain}</span>
         </button>
       </section>
-
-      <button type="button" className="restartButton" onClick={onRestart}>
-        {isRunning ? labels.restartRound : labels.playAgain}
-      </button>
 
       <section className="effects effectsInPanel">
         {labels.effects}: {activeEffects.length > 0 ? activeEffects.join(" · ") : labels.noEffects}

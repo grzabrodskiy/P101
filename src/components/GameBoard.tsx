@@ -120,19 +120,13 @@ export function GameBoard({
 
   const [multiplierLeft, setMultiplierLeft] = useState(0);
   const [freezeLeft, setFreezeLeft] = useState(0);
-  const [shieldLeft, setShieldLeft] = useState(0);
+  const [wallLeft, setWallLeft] = useState(0);
   const [slowLeft, setSlowLeft] = useState(0);
-  const [magnetLeft, setMagnetLeft] = useState(0);
-  const [doubleWordLeft, setDoubleWordLeft] = useState(0);
-  const [lockLetterCharges, setLockLetterCharges] = useState(0);
-  const [lockLeft, setLockLeft] = useState(0);
 
   const isMultiplierActive = multiplierLeft > 0;
   const isFrozen = freezeLeft > 0;
-  const isShieldActive = shieldLeft > 0;
+  const isWallActive = wallLeft > 0;
   const isSlowActive = slowLeft > 0;
-  const isMagnetActive = magnetLeft > 0;
-  const isDoubleWordReady = doubleWordLeft > 0;
   const roundPaceMultiplier = 1 + (currentRound - 1) * ROUND_PACE_STEP;
   const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
@@ -186,12 +180,8 @@ export function GameBoard({
 
     setMultiplierLeft(0);
     setFreezeLeft(0);
-    setShieldLeft(0);
+    setWallLeft(0);
     setSlowLeft(0);
-    setMagnetLeft(0);
-    setDoubleWordLeft(0);
-    setLockLetterCharges(0);
-    setLockLeft(0);
 
     if (resetScore) {
       setScore(0);
@@ -225,28 +215,11 @@ export function GameBoard({
 
       const speedFactor = isFrozen ? 0 : isSlowActive ? 0.45 : 1;
       const dt = dtBase * speedFactor * roundPaceMultiplier;
+      const tileMaxBounces = isWallActive ? Number.MAX_SAFE_INTEGER : maxBounces;
 
       setTiles((prevTiles) => {
         const nextTiles = prevTiles
-          .map((tile) => {
-            let candidate: Tile = tile;
-
-            if (isMagnetActive && pointerRef.current && tile.state !== "exiting") {
-              const centerX = tile.x + TILE_SIZE / 2;
-              const centerY = tile.y + TILE_SIZE / 2;
-              const dx = pointerRef.current.x - centerX;
-              const dy = pointerRef.current.y - centerY;
-              const dist = Math.hypot(dx, dy) || 1;
-              const accel = 230 * dt;
-              candidate = {
-                ...tile,
-                vx: tile.vx + (dx / dist) * accel,
-                vy: tile.vy + (dy / dist) * accel
-              };
-            }
-
-            return updateMovingEntity(candidate, TILE_SIZE, dt, maxBounces);
-          })
+          .map((tile) => updateMovingEntity(tile, TILE_SIZE, dt, tileMaxBounces))
           .filter((value): value is Tile => value !== null);
 
         while (!isRefreshing && nextTiles.length < activeTileTarget) {
@@ -286,7 +259,7 @@ export function GameBoard({
     activeTileTarget,
     isFrozen,
     isSlowActive,
-    isMagnetActive,
+    isWallActive,
     maxBounces,
     effectivePowerUpRespawnMs,
     speedMultiplier,
@@ -320,16 +293,8 @@ export function GameBoard({
       });
       setMultiplierLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setFreezeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-      setShieldLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      setWallLeft((prev) => (prev > 0 ? prev - 1 : 0));
       setSlowLeft((prev) => (prev > 0 ? prev - 1 : 0));
-      setMagnetLeft((prev) => (prev > 0 ? prev - 1 : 0));
-      setDoubleWordLeft((prev) => (prev > 0 ? prev - 1 : 0));
-      setLockLeft((prev) => {
-        if (prev <= 0) return 0;
-        const next = prev - 1;
-        if (next === 0) setLockLetterCharges(0);
-        return next;
-      });
     }, 1000);
 
     return () => clearInterval(interval);
@@ -368,10 +333,19 @@ export function GameBoard({
     return () => clearTimeout(timeout);
   }, [explosionPulse]);
 
-  const trayWord = useMemo(() => tray.map((tile) => tile.char).join(""), [tray]);
-  const trayBaseScore = useMemo(() => tray.reduce((sum, tile) => sum + tile.value, 0), [tray]);
+  const trayBaseScore = useMemo(
+    () => tray.reduce((sum, tile) => sum + tile.value * (tile.letterMultiplier ?? 1), 0),
+    [tray]
+  );
+  const trayWordMultiplier = useMemo(
+    () => tray.reduce((product, tile) => product * (tile.wordMultiplier ?? 1), 1),
+    [tray]
+  );
   const trayLengthBonus = useMemo(() => wordLengthBonus(tray.length), [tray.length]);
-  const trayScore = useMemo(() => trayBaseScore + trayLengthBonus, [trayBaseScore, trayLengthBonus]);
+  const trayScore = useMemo(
+    () => (trayBaseScore + trayLengthBonus) * trayWordMultiplier,
+    [trayBaseScore, trayLengthBonus, trayWordMultiplier]
+  );
   const canSubmit = isRunning && !isPaused && !isRefreshing && !isChecking && wordValidation === "valid";
 
   useEffect(() => {
@@ -396,39 +370,26 @@ export function GameBoard({
     const effects: string[] = [];
     if (isMultiplierActive) effects.push(`${t.effectX2} ${multiplierLeft}s`);
     if (isFrozen) effects.push(`${t.effectFreeze} ${freezeLeft}s`);
-    if (isShieldActive) effects.push(`${t.effectShield} ${shieldLeft}s`);
+    if (isWallActive) effects.push(`${t.effectWall} ${wallLeft}s`);
     if (isSlowActive) effects.push(`${t.effectSlow} ${slowLeft}s`);
-    if (isMagnetActive) effects.push(`${t.effectMagnet} ${magnetLeft}s`);
-    if (isDoubleWordReady) effects.push(`${t.effectDoubleWord} ${doubleWordLeft}s`);
-    if (lockLetterCharges > 0) effects.push(`${t.effectLock} x${lockLetterCharges} ${lockLeft}s`);
     return effects;
   }, [
     isMultiplierActive,
     multiplierLeft,
     isFrozen,
     freezeLeft,
-    isShieldActive,
-    shieldLeft,
+    isWallActive,
+    wallLeft,
     isSlowActive,
     slowLeft,
-    isMagnetActive,
-    magnetLeft,
-    isDoubleWordReady,
-    doubleWordLeft,
-    lockLetterCharges,
-    lockLeft,
     t.effectX2,
     t.effectFreeze,
-    t.effectShield,
-    t.effectSlow,
-    t.effectMagnet,
-    t.effectDoubleWord,
-    t.effectLock
+    t.effectWall,
+    t.effectSlow
   ]);
 
   function collectTile(tileId: number) {
     if (!isRunning || isPaused || isRefreshing) return;
-    const shouldLock = lockLetterCharges > 0;
 
     setTiles((prev) => {
       const found = prev.find((tile) => tile.id === tileId);
@@ -440,13 +401,10 @@ export function GameBoard({
           char: found.char,
           value: found.value,
           id: found.id,
-          locked: shouldLock
+          letterMultiplier: found.letterMultiplier,
+          wordMultiplier: found.wordMultiplier
         }
       ]);
-
-      if (shouldLock) {
-        setLockLetterCharges((charges) => Math.max(charges - 1, 0));
-      }
 
       const nextTiles = prev.filter((tile) => tile.id !== tileId);
       if (nextTiles.length < activeTileTarget) {
@@ -491,13 +449,8 @@ export function GameBoard({
       return;
     }
 
-    let awardedPoints = trayBaseScore + wordLengthBonus(resolvedWord.length);
+    let awardedPoints = (trayBaseScore + wordLengthBonus(resolvedWord.length)) * trayWordMultiplier;
     let messageSuffix = "";
-    if (isDoubleWordReady) {
-      awardedPoints *= 2;
-      messageSuffix = t.doubleWordSuffix;
-      setDoubleWordLeft(0);
-    }
     const nextComboMultiplier =
       comboWindowLeft > 0
         ? Math.min(COMBO_MAX_MULTIPLIER, comboMultiplier + COMBO_BONUS_STEP)
@@ -530,7 +483,7 @@ export function GameBoard({
   }, [comboPulse]);
 
   function removeLastFromTray() {
-    if (!isRunning || isPaused || isRefreshing || isShieldActive) return;
+    if (!isRunning || isPaused || isRefreshing) return;
 
     setTray((prev) => {
       for (let index = prev.length - 1; index >= 0; index -= 1) {
@@ -543,17 +496,8 @@ export function GameBoard({
   }
 
   function clearTray() {
-    if (!isRunning || isPaused || isRefreshing || isShieldActive) return;
-    setTray((prev) => prev.filter((tile) => tile.locked));
-  }
-
-  function replaceTilesByPredicate(predicate: (tile: Tile) => boolean) {
-    setTiles((prev) =>
-      prev.map((tile) => {
-        if (!predicate(tile)) return tile;
-        return makeTile(idRef.current++, language, speedMultiplier);
-      })
-    );
+    if (!isRunning || isPaused || isRefreshing) return;
+    setTray([]);
   }
 
   function activatePowerUp(event: SyntheticEvent) {
@@ -566,8 +510,15 @@ export function GameBoard({
     const capDuration = (seconds: number) => Math.min(seconds, MAX_EFFECT_SECONDS);
 
     if (kind === "bomb") {
-      setTiles([]);
-      setIsRefreshing(true);
+      setTiles((prev) => {
+        if (prev.length === 0) return prev;
+        const index = Math.floor(Math.random() * prev.length);
+        const next = [...prev.slice(0, index), ...prev.slice(index + 1)];
+        while (next.length < activeTileTarget) {
+          next.push(makeTile(idRef.current++, language, speedMultiplier));
+        }
+        return next;
+      });
       setExplosionPulse(true);
       setStatus(t.powerUpActivated.bomb);
       return;
@@ -585,21 +536,9 @@ export function GameBoard({
       return;
     }
 
-    if (kind === "shield") {
-      setShieldLeft(capDuration(POWERUP_META.shield.durationSeconds ?? 10));
-      setStatus(t.powerUpActivated.shield);
-      return;
-    }
-
-    if (kind === "wild") {
-      setTray((prev) => [...prev, { id: idRef.current++, char: "*", value: 0, wildcard: true }]);
-      setStatus(t.powerUpActivated.wild);
-      return;
-    }
-
-    if (kind === "reroll") {
-      replaceTilesByPredicate((tile) => tile.value === 1);
-      setStatus(t.powerUpActivated.reroll);
+    if (kind === "wall") {
+      setWallLeft(capDuration(POWERUP_META.wall.durationSeconds ?? 15));
+      setStatus(t.powerUpActivated.wall);
       return;
     }
 
@@ -609,33 +548,14 @@ export function GameBoard({
       return;
     }
 
-    if (kind === "double") {
-      setDoubleWordLeft(MAX_EFFECT_SECONDS);
-      setStatus(t.powerUpActivated.double);
-      return;
-    }
-
-    if (kind === "magnet") {
-      setMagnetLeft(capDuration(POWERUP_META.magnet.durationSeconds ?? 8));
-      setStatus(t.powerUpActivated.magnet);
-      return;
-    }
-
     if (kind === "extra-time") {
       setTimeLeft((prev) => prev + 10);
       setStatus(t.powerUpActivated["extra-time"]);
       return;
     }
 
-    if (kind === "lock") {
-      setLockLetterCharges((prev) => prev + 1);
-      setLockLeft(MAX_EFFECT_SECONDS);
-      setStatus(t.powerUpActivated.lock);
-      return;
-    }
-
-    replaceTilesByPredicate((tile) => tile.value >= 8);
-    setStatus(t.powerUpActivated.purge);
+    setTimeLeft((prev) => prev + 15);
+    setStatus(t.powerUpActivated["extra-time-15"]);
   }
 
   function restartRound() {
@@ -698,6 +618,12 @@ export function GameBoard({
           lineTapLetters: t.helpLineTapLetters,
           lineSubmitValid: t.helpLineSubmitValid,
           linePowerUps: t.helpLinePowerUps,
+          scoringTitle: t.helpScoringTitle,
+          lineBonusTiles: t.helpLineBonusTiles,
+          lineWordMultiplierStack: t.helpLineWordMultiplierStack,
+          roundsTitle: t.helpRoundsTitle,
+          lineRoundsGoal: t.helpLineRoundsGoal,
+          lineRoundsEnd: t.helpLineRoundsEnd,
           powerUpsTitle: t.helpPowerUpsTitle,
           close: t.closeHelp
         }}
@@ -744,15 +670,11 @@ export function GameBoard({
             setIsMenuOpen(false);
           }}
           onOpenHelp={() => {
-            setIsHelpModalOpen(true);
-            setIsMenuOpen(false);
-          }}
-          onRestartRound={() => {
-            if (isGameOver) {
-              startNewGame();
-            } else {
-              restartRound();
+            if (isRunning && !isPaused) {
+              setIsPaused(true);
+              setStatus(t.pausedStatus);
             }
+            setIsHelpModalOpen(true);
             setIsMenuOpen(false);
           }}
           onNewGame={startNewGame}
@@ -763,7 +685,6 @@ export function GameBoard({
             help: t.help,
             pause: t.pause,
             resume: t.resume,
-            restartRound: t.restartRound,
             newGame: t.newGame,
             closeMenu: t.closeMenu
           }}
@@ -790,7 +711,8 @@ export function GameBoard({
 
         <section className="rightColumn">
           <GameHud
-            scoreProgress={`${roundScore}/${goalConfig.score}`}
+            roundScoreProgress={`${roundScore}/${goalConfig.score}`}
+            totalScore={score}
             timeLeft={timeLeft}
             roundLabel={`${currentRound}`}
             comboLabel={comboWindowLeft > 0 ? `x${comboMultiplier.toFixed(2)} (${comboWindowLeft}s)` : "x1.00"}
@@ -798,7 +720,8 @@ export function GameBoard({
             letterCount={tiles.length}
             languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
             labels={{
-              score: t.totalScore,
+              roundScore: t.roundScore,
+              totalScore: t.totalScore,
               round: t.round,
               combo: t.combo,
               timeLeft: t.timeLeft,
@@ -809,21 +732,20 @@ export function GameBoard({
 
           <GameSidePanel
             tray={tray}
-            trayWord={trayWord}
             trayBaseScore={trayBaseScore}
             trayLengthBonus={trayLengthBonus}
+            trayWordMultiplier={trayWordMultiplier}
             trayScore={trayScore}
             isChecking={isChecking}
             submitDisabled={!canSubmit}
             isRunning={isRunning}
             isRefreshing={isRefreshing || isPaused}
-            isShieldActive={isShieldActive}
             activeEffects={activeEffects}
             submittedWords={submittedWords}
             onSubmitWord={submitWord}
             onBackspace={removeLastFromTray}
             onClear={clearTray}
-            onRestart={isGameOver ? startNewGame : restartRound}
+            onRestart={startNewGame}
             labels={{
               trayPlaceholder: t.trayPlaceholder,
               wordPoints: t.wordPoints,
@@ -831,8 +753,8 @@ export function GameBoard({
               checking: t.checking,
               backspace: t.backspace,
               clear: t.clear,
-              restartRound: t.restartRound,
-              playAgain: t.playAgain,
+              restartRound: t.newGame,
+              playAgain: t.newGame,
               acceptedWords: t.acceptedWords,
               noneYet: t.noneYet,
               effects: t.effects,

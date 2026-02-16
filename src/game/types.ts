@@ -15,21 +15,18 @@ export type MovingEntity = {
 export type Tile = MovingEntity & {
   char: Letter;
   value: number;
+  letterMultiplier?: 2 | 3;
+  wordMultiplier?: 2 | 3;
 };
 
 export type PowerUpKind =
   | "bomb"
   | "multiplier"
   | "freeze"
-  | "shield"
-  | "wild"
-  | "reroll"
+  | "wall"
   | "slow"
-  | "double"
-  | "magnet"
   | "extra-time"
-  | "lock"
-  | "purge";
+  | "extra-time-15";
 
 export type PowerUp = MovingEntity & {
   kind: PowerUpKind;
@@ -39,6 +36,8 @@ export type TrayTile = {
   id: number;
   char: Letter | "*";
   value: number;
+  letterMultiplier?: 2 | 3;
+  wordMultiplier?: 2 | 3;
   locked?: boolean;
   wildcard?: boolean;
 };

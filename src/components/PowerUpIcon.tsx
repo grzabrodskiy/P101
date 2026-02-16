@@ -4,21 +4,16 @@ const POWERUP_ICON: Record<PowerUpKind, string> = {
   bomb: "💣",
   multiplier: "✨",
   freeze: "🧊",
-  shield: "🛡️",
-  wild: "🃏",
-  reroll: "🔄",
+  wall: "🧱",
   slow: "🐢",
-  double: "🎯",
-  magnet: "🧲",
   "extra-time": "⏱️",
-  lock: "🔒",
-  purge: "🧹"
+  "extra-time-15": "⏳"
 };
 
 const POWERUP_BADGE: Partial<Record<PowerUpKind, string>> = {
   multiplier: "x2",
-  double: "DW",
-  "extra-time": "+10"
+  "extra-time": "+10",
+  "extra-time-15": "+15"
 };
 
 type PowerUpIconProps = {

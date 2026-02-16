@@ -98,15 +98,10 @@ export const POWERUP_META: Record<
   bomb: { label: "💣" },
   multiplier: { label: "x2", durationSeconds: 12 },
   freeze: { label: "❄️", durationSeconds: 5 },
-  shield: { label: "🛡️", durationSeconds: 10 },
-  wild: { label: "*" },
-  reroll: { label: "🔁" },
+  wall: { label: "🧱", durationSeconds: 15 },
   slow: { label: "⏳", durationSeconds: 8 },
-  double: { label: "DW" },
-  magnet: { label: "🧲", durationSeconds: 8 },
   "extra-time": { label: "+10" },
-  lock: { label: "🔒" },
-  purge: { label: "🧹" }
+  "extra-time-15": { label: "+15" }
 };
 
 export const POWERUP_TYPES = Object.keys(POWERUP_META) as PowerUpKind[];
@@ -115,13 +110,8 @@ export const POWERUP_SPAWN_WEIGHTS: Record<PowerUpKind, number> = {
   bomb: 1,
   multiplier: 1,
   freeze: 1,
-  shield: 1,
-  wild: 4,
-  reroll: 1,
+  wall: 1,
   slow: 1,
-  double: 1,
-  magnet: 1,
   "extra-time": 1,
-  lock: 1,
-  purge: 1
+  "extra-time-15": 1
 };
