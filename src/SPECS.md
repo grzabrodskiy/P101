@@ -50,13 +50,11 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Bonus Tile Multipliers
 - Some letter tiles spawn with value modifiers similar to Scrabble bonuses:
-- `DL` (double letter): tile letter value is multiplied by `2`.
-- `TL` (triple letter): tile letter value is multiplied by `3`.
-- `DW` (double word): total built-word value is multiplied by `2`.
-- `TW` (triple word): total built-word value is multiplied by `3`.
-- `DL`/`TL` tiles are highlighted by border color (`blue`/`red`).
-- `DW`/`TW` tiles are highlighted by background color changes.
-- Bonus markers (`DL`, `TL`, `DW`, `TW`) are rendered on tiles.
+- `x2` / `x3` letter tiles: tile letter value is multiplied by `2` / `3`.
+- `x2` / `x3` word tiles: total built-word value is multiplied by `2` / `3`.
+- Letter multipliers are highlighted by border color (`blue`/`red`).
+- Word multipliers are highlighted by background color changes.
+- Bonus markers are rendered as `x2` / `x3` on tiles.
 - Bonus properties persist when a tile is collected into the tray.
 
 ## Input and Interaction
@@ -105,7 +103,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Help is shown as a modal popup opened from the in-game menu.
 - Opening Help pauses gameplay/timer.
 - Popup includes a brief "how to play" section.
-- Popup includes scoring guidance for `DL`/`TL` and `DW`/`TW` behavior.
+- Popup includes scoring guidance for `x2`/`x3` letter and word multiplier behavior.
 - Popup includes round progression and round-fail conditions.
 - Popup lists all power-ups with icon/label and effect description.
 - Help content is localized with the currently selected game language.
@@ -124,10 +122,10 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 
 ## Scoring
 - Each letter uses language-specific Scrabble-like point values.
-- Word base score uses per-tile letter multipliers (`DL`/`TL`) before length bonus.
+- Word base score uses per-tile letter multipliers (`x2`/`x3`) before length bonus.
 - Length bonus is added: `+0` for `4` letters; for `5+`, bonus doubles each extra letter (`+2`, `+4`, `+8`, `+16`, ...).
-- Word multipliers (`DW`/`TW`) are applied after letter math: `(letter-score + length bonus) * (all word multipliers)`.
-- Multiple word multipliers stack multiplicatively (for example `DW + DW = x4`, `DW + TW = x6`).
+- Word multipliers (`x2`/`x3` word tiles) are applied after letter math: `(letter-score + length bonus) * (all word multipliers)`.
+- Multiple word multipliers stack multiplicatively (for example `x2 + x2 = x4`, `x2 + x3 = x6`).
 - Wildcard tile value is `0`.
 - On valid submit, add points to total score, record accepted word, then clear tray.
 - Score is cumulative across endless rounds until user starts a new game.

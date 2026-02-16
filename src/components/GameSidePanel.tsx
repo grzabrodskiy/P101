@@ -70,9 +70,9 @@ export function GameSidePanel({
                 .join(" ");
 
               const modifierBadge = tile.letterMultiplier
-                ? `${tile.letterMultiplier === 2 ? "D" : "T"}L`
+                ? `x${tile.letterMultiplier}`
                 : tile.wordMultiplier
-                  ? `${tile.wordMultiplier === 2 ? "D" : "T"}W`
+                  ? `x${tile.wordMultiplier}`
                   : null;
 
               return (
