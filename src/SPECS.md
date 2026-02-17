@@ -33,7 +33,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - All power-up effects are temporary: they either resolve naturally immediately, or expire within `30` seconds.
 
 ## Implemented Power-Ups
-- `💣 Bomb`: destroys one currently flying letter.
+- `💣 Bomb`: destroys all currently flying letters and the active power-up; the field then repopulates gradually.
 - `❄️ Freeze`: freezes movement for `5s`.
 - `🧱 Wall`: prevents existing letters from leaving the field for `15s` (new spawns still occur normally).
 - `⏳ Slow Time`: slows movement for `8s`.
@@ -138,6 +138,7 @@ Build words by tapping flying Scrabble-style letter tiles and submit valid words
 - Score is cumulative across endless rounds until user starts a new game.
 
 ## UI Requirements
+- Visual theme follows legacy WordFlakes look-and-feel: dark stage background, electric blue/orange accents, ivory tiles, and high-contrast panel chrome.
 - Show round score progress and total score as separate counters in HUD.
 - Show time remaining in seconds.
 - Show active flying letter count.

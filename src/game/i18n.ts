@@ -60,6 +60,8 @@ type Translations = {
   menuButton: string;
   menuTitle: string;
   options: string;
+  cancel: string;
+  applyAndRestart: string;
   help: string;
   lettersOnScreen: string;
   pause: string;
@@ -147,6 +149,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     menuButton: "Menu",
     menuTitle: "Game Menu",
     options: "Options",
+    cancel: "Cancel",
+    applyAndRestart: "Apply and Restart",
     lettersOnScreen: "Letters",
     help: "Help",
     pause: "Pause",
@@ -156,7 +160,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     finalScore: "Final Score",
     playMatchAgain: "Play Match Again",
     newGame: "New Game",
-    closeMenu: "Close",
+    closeMenu: "Cancel",
     helpTitle: "How To Play",
     helpHowToTitle: "Quick Instructions",
     helpLineBuildWords: "Build words by tapping flying letters.",
@@ -181,7 +185,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Make ${count} words of ${minLength}+ letters`,
     goalPowerUps: (count) => `Use ${count} power-ups`,
     powerUpActivated: {
-      bomb: "Bomb triggered. Removed one letter.",
+      bomb: "Bomb triggered. Cleared all flying letters and power-ups.",
       freeze: "Freeze activated.",
       wall: "Wall activated.",
       slow: "Slow Time activated.",
@@ -189,7 +193,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
       "extra-time-15": "+15 seconds added."
     },
     powerUpHelp: {
-      bomb: "Destroys one current flying letter.",
+      bomb: "Clears all flying letters and power-ups, then repopulates gradually.",
       freeze: "Freezes movement briefly.",
       wall: "Prevents letters from leaving for 15 seconds.",
       slow: "Slows all movement.",
@@ -247,6 +251,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     menuButton: "Menü",
     menuTitle: "Spielmenü",
     options: "Optionen",
+    cancel: "Abbrechen",
+    applyAndRestart: "Anwenden & Neustart",
     lettersOnScreen: "Buchstaben",
     help: "Hilfe",
     pause: "Pause",
@@ -281,7 +287,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `${count} Wörter mit ${minLength}+ Buchstaben`,
     goalPowerUps: (count) => `${count} Power-ups nutzen`,
     powerUpActivated: {
-      bomb: "Bombe ausgelöst. Ein Buchstabe entfernt.",
+      bomb: "Bombe ausgelöst. Alle fliegenden Buchstaben und Power-ups entfernt.",
       freeze: "Einfrieren aktiviert.",
       wall: "Mauer aktiviert.",
       slow: "Zeitlupe aktiviert.",
@@ -289,7 +295,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
       "extra-time-15": "+15 Sekunden hinzugefügt."
     },
     powerUpHelp: {
-      bomb: "Entfernt einen aktuellen fliegenden Buchstaben.",
+      bomb: "Entfernt alle fliegenden Buchstaben und Power-ups, dann füllt sich das Feld schrittweise.",
       freeze: "Stoppt die Bewegung kurz.",
       wall: "Verhindert 15 Sekunden lang, dass Buchstaben das Feld verlassen.",
       slow: "Verlangsamt alle Bewegungen.",
@@ -347,6 +353,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     menuButton: "Menu",
     menuTitle: "Menu du jeu",
     options: "Options",
+    cancel: "Annuler",
+    applyAndRestart: "Appliquer et redémarrer",
     lettersOnScreen: "Lettres",
     help: "Aide",
     pause: "Pause",
@@ -381,7 +389,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Faire ${count} mots de ${minLength}+ lettres`,
     goalPowerUps: (count) => `Utiliser ${count} bonus`,
     powerUpActivated: {
-      bomb: "Bombe activée. Une lettre supprimée.",
+      bomb: "Bombe activée. Toutes les lettres volantes et bonus supprimés.",
       freeze: "Gel activé.",
       wall: "Mur activé.",
       slow: "Ralenti activé.",
@@ -389,7 +397,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
       "extra-time-15": "+15 secondes ajoutées."
     },
     powerUpHelp: {
-      bomb: "Supprime une lettre volante actuelle.",
+      bomb: "Supprime toutes les lettres volantes et bonus, puis le terrain se remplit progressivement.",
       freeze: "Fige brièvement les mouvements.",
       wall: "Empêche les lettres de sortir pendant 15 secondes.",
       slow: "Ralentit tous les mouvements.",
@@ -447,6 +455,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     menuButton: "Menu",
     menuTitle: "Menu gioco",
     options: "Opzioni",
+    cancel: "Annulla",
+    applyAndRestart: "Applica e riavvia",
     lettersOnScreen: "Lettere",
     help: "Aiuto",
     pause: "Pausa",
@@ -481,7 +491,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Fai ${count} parole da ${minLength}+ lettere`,
     goalPowerUps: (count) => `Usa ${count} power-up`,
     powerUpActivated: {
-      bomb: "Bomba attivata. Una lettera rimossa.",
+      bomb: "Bomba attivata. Tutte le lettere volanti e i power-up rimossi.",
       freeze: "Congelamento attivato.",
       wall: "Muro attivato.",
       slow: "Rallentamento attivato.",
@@ -489,7 +499,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
       "extra-time-15": "+15 secondi aggiunti."
     },
     powerUpHelp: {
-      bomb: "Rimuove una lettera volante corrente.",
+      bomb: "Rimuove tutte le lettere volanti e i power-up, poi il campo si ripopola gradualmente.",
       freeze: "Blocca i movimenti per poco.",
       wall: "Impedisce alle lettere di uscire per 15 secondi.",
       slow: "Rallenta tutti i movimenti.",
@@ -547,6 +557,8 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     menuButton: "Меню",
     menuTitle: "Меню игры",
     options: "Опции",
+    cancel: "Отмена",
+    applyAndRestart: "Применить и перезапустить",
     lettersOnScreen: "Буквы",
     help: "Помощь",
     pause: "Пауза",
@@ -581,7 +593,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     goalLongWords: (count, minLength) => `Собрать ${count} слов по ${minLength}+ букв`,
     goalPowerUps: (count) => `Использовать ${count} бонуса`,
     powerUpActivated: {
-      bomb: "Бомба активирована. Одна буква удалена.",
+      bomb: "Бомба активирована. Все летающие буквы и бонусы удалены.",
       freeze: "Заморозка активирована.",
       wall: "Стена активирована.",
       slow: "Замедление активировано.",
@@ -589,7 +601,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
       "extra-time-15": "+15 секунд добавлено."
     },
     powerUpHelp: {
-      bomb: "Удаляет одну текущую летающую букву.",
+      bomb: "Удаляет все летающие буквы и бонусы, после чего поле постепенно заполняется.",
       freeze: "Временно останавливает движение.",
       wall: "Не даёт буквам покидать поле 15 секунд.",
       slow: "Замедляет все движения.",

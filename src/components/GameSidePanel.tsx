@@ -1,4 +1,5 @@
 import type { SubmittedWord, TrayTile } from "../game/types";
+import { ACTION_ICONS } from "./actionIcons";
 
 type GameSidePanelProps = {
   tray: TrayTile[];
@@ -107,7 +108,7 @@ export function GameSidePanel({
           aria-label={isChecking ? labels.checking : labels.submitWord}
           className="iconButton"
         >
-          <span className="iconGlyph" aria-hidden="true">{isChecking ? "⏳" : "✅"}</span>
+          <span className="iconGlyph" aria-hidden="true">{isChecking ? ACTION_ICONS.checking : ACTION_ICONS.submit}</span>
           <span className="iconText">{labels.submitWord}</span>
         </button>
         <button
@@ -118,7 +119,7 @@ export function GameSidePanel({
           aria-label={labels.backspace}
           className="iconButton"
         >
-          <span className="iconGlyph" aria-hidden="true">⌫</span>
+          <span className="iconGlyph" aria-hidden="true">{ACTION_ICONS.backspace}</span>
           <span className="iconText">{labels.backspace}</span>
         </button>
         <button
@@ -129,7 +130,7 @@ export function GameSidePanel({
           aria-label={labels.clear}
           className="iconButton"
         >
-          <span className="iconGlyph" aria-hidden="true">🧹</span>
+          <span className="iconGlyph" aria-hidden="true">{ACTION_ICONS.clear}</span>
           <span className="iconText">{labels.clear}</span>
         </button>
         <button
@@ -139,7 +140,7 @@ export function GameSidePanel({
           title={isRunning ? labels.restartRound : labels.playAgain}
           aria-label={isRunning ? labels.restartRound : labels.playAgain}
         >
-          <span className="iconGlyph" aria-hidden="true">↻</span>
+          <span className="iconGlyph" aria-hidden="true">{ACTION_ICONS.restart}</span>
           <span className="iconText">{isRunning ? labels.restartRound : labels.playAgain}</span>
         </button>
       </section>

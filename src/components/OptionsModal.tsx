@@ -27,7 +27,8 @@ type OptionsModalProps = {
   onSpeedMultiplierChange: (value: SpeedMultiplier) => void;
   onMaxBouncesChange: (value: MaxBounces) => void;
   onDifficultyPresetChange: (preset: DifficultyPresetKey) => void;
-  onClose: () => void;
+  onCancel: () => void;
+  onApply: () => void;
   labels: {
     title: string;
     difficulty: string;
@@ -37,7 +38,8 @@ type OptionsModalProps = {
     speed: string;
     bounces: string;
     speedOptionLabel: (value: SpeedMultiplier) => string;
-    close: string;
+    cancel: string;
+    applyAndRestart: string;
   };
 };
 
@@ -61,13 +63,14 @@ export function OptionsModal({
   onSpeedMultiplierChange,
   onMaxBouncesChange,
   onDifficultyPresetChange,
-  onClose,
+  onCancel,
+  onApply,
   labels
 }: OptionsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="modalBackdrop" role="presentation" onClick={onClose}>
+    <div className="modalBackdrop" role="presentation" onClick={onCancel}>
       <section
         className="languageModal"
         role="dialog"
@@ -178,9 +181,14 @@ export function OptionsModal({
           </select>
         </div>
 
-        <button type="button" onClick={onClose}>
-          {labels.close}
-        </button>
+        <div className="modalActions">
+          <button type="button" onClick={onCancel}>
+            {labels.cancel}
+          </button>
+          <button type="button" onClick={onApply}>
+            {labels.applyAndRestart}
+          </button>
+        </div>
       </section>
     </div>
   );

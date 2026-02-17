@@ -42,27 +42,62 @@ export default function App() {
   const [maxBounces, setMaxBounces] = useState<MaxBounces>(DIFFICULTY_PRESETS.standard.maxBounces);
   const [powerUpRespawnMs, setPowerUpRespawnMs] = useState(POWERUP_RESPAWN_MS);
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+  const [draftLanguage, setDraftLanguage] = useState<LanguageCode>(language);
+  const [draftRoundSeconds, setDraftRoundSeconds] = useState<RoundDurationSeconds>(roundSeconds);
+  const [draftBaseTileCount, setDraftBaseTileCount] = useState<BaseTileCount>(baseTileCount);
+  const [draftSpeedMultiplier, setDraftSpeedMultiplier] = useState<SpeedMultiplier>(speedMultiplier);
+  const [draftMaxBounces, setDraftMaxBounces] = useState<MaxBounces>(maxBounces);
+  const [draftPowerUpRespawnMs, setDraftPowerUpRespawnMs] = useState(powerUpRespawnMs);
 
   const t = UI_TEXT[language];
-  const selectedPreset = detectPreset(baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs);
+  const selectedPreset = detectPreset(
+    draftBaseTileCount,
+    draftSpeedMultiplier,
+    draftMaxBounces,
+    draftPowerUpRespawnMs
+  );
 
-  function applyPreset(presetKey: DifficultyPresetKey) {
+  function applyPresetToDraft(presetKey: DifficultyPresetKey) {
     const preset = DIFFICULTY_PRESETS[presetKey];
-    setBaseTileCount(preset.baseTileCount);
-    setSpeedMultiplier(preset.speedMultiplier);
-    setMaxBounces(preset.maxBounces);
-    setPowerUpRespawnMs(preset.powerUpRespawnMs);
+    setDraftBaseTileCount(preset.baseTileCount);
+    setDraftSpeedMultiplier(preset.speedMultiplier);
+    setDraftMaxBounces(preset.maxBounces);
+    setDraftPowerUpRespawnMs(preset.powerUpRespawnMs);
+  }
+
+  function openOptionsModal() {
+    setDraftLanguage(language);
+    setDraftRoundSeconds(roundSeconds);
+    setDraftBaseTileCount(baseTileCount);
+    setDraftSpeedMultiplier(speedMultiplier);
+    setDraftMaxBounces(maxBounces);
+    setDraftPowerUpRespawnMs(powerUpRespawnMs);
+    setIsOptionsModalOpen(true);
+  }
+
+  function cancelOptionsModal() {
+    setIsOptionsModalOpen(false);
+  }
+
+  function applyOptionsAndRestart() {
+    setLanguage(draftLanguage);
+    setRoundSeconds(draftRoundSeconds);
+    setBaseTileCount(draftBaseTileCount);
+    setSpeedMultiplier(draftSpeedMultiplier);
+    setMaxBounces(draftMaxBounces);
+    setPowerUpRespawnMs(draftPowerUpRespawnMs);
+    setIsOptionsModalOpen(false);
   }
 
   return (
     <main className="app">
       <OptionsModal
         isOpen={isOptionsModalOpen}
-        language={language}
-        duration={roundSeconds}
-        baseTileCount={baseTileCount}
-        speedMultiplier={speedMultiplier}
-        maxBounces={maxBounces}
+        language={draftLanguage}
+        duration={draftRoundSeconds}
+        baseTileCount={draftBaseTileCount}
+        speedMultiplier={draftSpeedMultiplier}
+        maxBounces={draftMaxBounces}
         difficultyPreset={selectedPreset}
         languageOptions={LANGUAGE_OPTIONS}
         difficultyPresetOptions={[
@@ -78,13 +113,14 @@ export default function App() {
         baseTileCountOptions={[...BASE_TILE_COUNT_OPTIONS]}
         speedMultiplierOptions={[...SPEED_MULTIPLIER_OPTIONS]}
         maxBouncesOptions={[...MAX_BOUNCES_OPTIONS]}
-        onLanguageChange={setLanguage}
-        onDurationChange={setRoundSeconds}
-        onBaseTileCountChange={setBaseTileCount}
-        onSpeedMultiplierChange={setSpeedMultiplier}
-        onMaxBouncesChange={setMaxBounces}
-        onDifficultyPresetChange={applyPreset}
-        onClose={() => setIsOptionsModalOpen(false)}
+        onLanguageChange={setDraftLanguage}
+        onDurationChange={setDraftRoundSeconds}
+        onBaseTileCountChange={setDraftBaseTileCount}
+        onSpeedMultiplierChange={setDraftSpeedMultiplier}
+        onMaxBouncesChange={setDraftMaxBounces}
+        onDifficultyPresetChange={applyPresetToDraft}
+        onCancel={cancelOptionsModal}
+        onApply={applyOptionsAndRestart}
         labels={{
           title: t.options,
           difficulty: t.difficulty,
@@ -94,7 +130,8 @@ export default function App() {
           speed: t.speed,
           bounces: t.bounces,
           speedOptionLabel: t.speedOptionLabel,
-          close: t.closeMenu
+          cancel: t.cancel,
+          applyAndRestart: t.applyAndRestart
         }}
       />
 
@@ -105,7 +142,8 @@ export default function App() {
         speedMultiplier={speedMultiplier}
         maxBounces={maxBounces}
         powerUpRespawnMs={powerUpRespawnMs}
-        onOpenOptions={() => setIsOptionsModalOpen(true)}
+        isOptionsOpen={isOptionsModalOpen}
+        onOpenOptions={openOptionsModal}
       />
     </main>
   );

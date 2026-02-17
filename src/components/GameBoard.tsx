@@ -38,6 +38,7 @@ type GameBoardProps = {
   speedMultiplier: SpeedMultiplier;
   maxBounces: MaxBounces;
   powerUpRespawnMs: number;
+  isOptionsOpen: boolean;
   onOpenOptions: () => void;
 };
 
@@ -48,6 +49,7 @@ export function GameBoard({
   speedMultiplier,
   maxBounces,
   powerUpRespawnMs,
+  isOptionsOpen,
   onOpenOptions
 }: GameBoardProps) {
   const t = UI_TEXT[language];
@@ -58,6 +60,7 @@ export function GameBoard({
   const feedbackIdRef = useRef(1);
   const powerUpRespawnAtRef = useRef(0);
   const mountedRef = useRef(false);
+  const optionsAutoPausedRef = useRef(false);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
     Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, language, speedMultiplier))
@@ -70,6 +73,7 @@ export function GameBoard({
   const [isPaused, setIsPaused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [helpAutoPaused, setHelpAutoPaused] = useState(false);
   const [isBetweenRounds, setIsBetweenRounds] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [canAdvanceRound, setCanAdvanceRound] = useState(false);
@@ -91,6 +95,7 @@ export function GameBoard({
   const isFrozen = freezeLeft > 0;
   const isWallActive = wallLeft > 0;
   const isSlowActive = slowLeft > 0;
+  const isEffectivelyPaused = isPaused || isOptionsOpen;
   const roundPaceMultiplier = 1 + (currentRound - 1) * ROUND_PACE_STEP;
   const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
@@ -188,7 +193,7 @@ export function GameBoard({
       const dtBase = Math.min(0.05, (now - tickRef.current) / 1000);
       tickRef.current = now;
 
-      if (!isRunning || isPaused) {
+      if (!isRunning || isEffectivelyPaused) {
         frameRef.current = requestAnimationFrame(loop);
         return;
       }
@@ -211,7 +216,7 @@ export function GameBoard({
 
       setPowerUp((prevPowerUp) => {
         if (!prevPowerUp) {
-          if (!isRefreshing && now >= powerUpRespawnAtRef.current) {
+          if (!isRefreshing && !isFrozen && now >= powerUpRespawnAtRef.current) {
             return makePowerUp(idRef.current++, undefined, speedMultiplier);
           }
           return prevPowerUp;
@@ -234,7 +239,7 @@ export function GameBoard({
     };
   }, [
     isRunning,
-    isPaused,
+    isEffectivelyPaused,
     isRefreshing,
     activeTileTarget,
     isFrozen,
@@ -248,9 +253,10 @@ export function GameBoard({
   ]);
 
   useEffect(() => {
-    if (!isRunning || isPaused) return undefined;
+    if (!isRunning || isEffectivelyPaused) return undefined;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
+        if (isFrozen) return prev;
         if (prev <= 1) {
           const scoreGoalMet = roundScore >= goalConfig.score;
           setCanAdvanceRound(scoreGoalMet);
@@ -273,7 +279,8 @@ export function GameBoard({
     return () => clearInterval(interval);
   }, [
     isRunning,
-    isPaused,
+    isEffectivelyPaused,
+    isFrozen,
     t.timeUpStatus,
     t.statusScoreRequired,
     t.round,
@@ -281,6 +288,25 @@ export function GameBoard({
     goalConfig,
     roundScore
   ]);
+
+  useEffect(() => {
+    if (isOptionsOpen) {
+      if (isRunning && !isPaused) {
+        setIsPaused(true);
+        setStatus(t.pausedStatus);
+        optionsAutoPausedRef.current = true;
+      } else {
+        optionsAutoPausedRef.current = false;
+      }
+      return;
+    }
+
+    if (optionsAutoPausedRef.current && isRunning) {
+      setIsPaused(false);
+      setStatus(t.initialStatus);
+    }
+    optionsAutoPausedRef.current = false;
+  }, [isOptionsOpen, isRunning, isPaused, t.pausedStatus, t.initialStatus]);
 
   useEffect(() => {
     if (!isRunning || !isRefreshing) return undefined;
@@ -296,7 +322,6 @@ export function GameBoard({
   useEffect(() => {
     if (!isRefreshing || tiles.length < activeTileTarget) return;
     setIsRefreshing(false);
-    powerUpRespawnAtRef.current = performance.now() + 250;
     setStatus(t.bombRefreshComplete);
   }, [isRefreshing, tiles.length, activeTileTarget, t.bombRefreshComplete]);
 
@@ -350,22 +375,20 @@ export function GameBoard({
     const capDuration = (seconds: number) => Math.min(seconds, MAX_EFFECT_SECONDS);
 
     if (kind === "bomb") {
-      setTiles((prev) => {
-        if (prev.length === 0) return prev;
-        const index = Math.floor(Math.random() * prev.length);
-        const next = [...prev.slice(0, index), ...prev.slice(index + 1)];
-        while (next.length < activeTileTarget) {
-          next.push(makeTile(idRef.current++, language, speedMultiplier));
-        }
-        return next;
-      });
+      setTiles([]);
+      setIsRefreshing(true);
       setExplosionPulse(true);
       setStatus(t.powerUpActivated.bomb);
       return;
     }
 
     if (kind === "freeze") {
-      setFreezeLeft(capDuration(POWERUP_META.freeze.durationSeconds ?? 5));
+      const freezeSeconds = capDuration(POWERUP_META.freeze.durationSeconds ?? 5);
+      setFreezeLeft(freezeSeconds);
+      powerUpRespawnAtRef.current = Math.max(
+        powerUpRespawnAtRef.current,
+        performance.now() + freezeSeconds * 1000
+      );
       setStatus(t.powerUpActivated.freeze);
       return;
     }
@@ -415,13 +438,22 @@ export function GameBoard({
     });
   }
 
+  function closeHelpModal() {
+    setIsHelpModalOpen(false);
+    if (helpAutoPaused && isRunning) {
+      setIsPaused(false);
+      setStatus(t.initialStatus);
+    }
+    setHelpAutoPaused(false);
+  }
+
   return (
     <>
       <HelpModal
         isOpen={isHelpModalOpen}
         powerUpOrder={POWERUP_TYPES}
         powerUpHelpByKind={t.powerUpHelp}
-        onClose={() => setIsHelpModalOpen(false)}
+        onClose={closeHelpModal}
         labels={{
           title: t.helpTitle,
           howToTitle: t.helpHowToTitle,
@@ -480,6 +512,9 @@ export function GameBoard({
             if (isRunning && !isPaused) {
               setIsPaused(true);
               setStatus(t.pausedStatus);
+              setHelpAutoPaused(true);
+            } else {
+              setHelpAutoPaused(false);
             }
             setIsHelpModalOpen(true);
             setIsMenuOpen(false);
@@ -504,7 +539,7 @@ export function GameBoard({
             tiles={tiles}
             powerUp={powerUp}
             isRunning={isRunning}
-            isRefreshing={isRefreshing || isPaused}
+            isRefreshing={isRefreshing || isEffectivelyPaused}
             explosionPulse={explosionPulse}
             isFreezeActive={isFrozen}
             isWallActive={isWallActive}
@@ -547,7 +582,7 @@ export function GameBoard({
             isChecking={isChecking}
             submitDisabled={!canSubmit}
             isRunning={isRunning}
-            isRefreshing={isRefreshing || isPaused}
+            isRefreshing={isRefreshing || isEffectivelyPaused}
             activeEffects={activeEffects}
             submittedWords={submittedWords}
             onSubmitWord={submitWord}
