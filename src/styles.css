@@ -319,12 +319,6 @@ h1 {
   font-size: 0.92rem;
 }
 
-.effectsInPanel {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
 .hud {
   width: 100%;
   font-weight: 700;
@@ -887,11 +881,6 @@ h1 {
 .trayScore {
   margin-top: 4px;
   color: #334155;
-}
-
-.trayScoreDetails {
-  font-size: 0.9em;
-  color: #475569;
 }
 
 .trayBonuses {

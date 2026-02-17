@@ -109,7 +109,6 @@ export function GameBoard({
     submittedWords,
     isChecking,
     canSubmit,
-    trayBaseScore,
     trayWordMultiplier,
     trayLengthBonus,
     trayScore,
@@ -576,7 +575,6 @@ export function GameBoard({
 
           <GameSidePanel
             tray={tray}
-            trayBaseScore={trayBaseScore}
             trayLengthBonus={trayLengthBonus}
             trayWordMultiplier={trayWordMultiplier}
             trayScore={trayScore}
@@ -604,8 +602,7 @@ export function GameBoard({
               playAgain: t.newGame,
               acceptedWords: t.acceptedWords,
               noneYet: t.noneYet,
-              effects: t.effects,
-              noEffects: t.noEffects
+              effects: t.effects
             }}
           />
         </section>

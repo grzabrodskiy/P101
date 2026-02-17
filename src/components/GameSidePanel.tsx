@@ -3,7 +3,6 @@ import { ACTION_ICONS } from "./actionIcons";
 
 type GameSidePanelProps = {
   tray: TrayTile[];
-  trayBaseScore: number;
   trayLengthBonus: number;
   trayWordMultiplier: number;
   trayScore: number;
@@ -32,13 +31,11 @@ type GameSidePanelProps = {
     acceptedWords: string;
     noneYet: string;
     effects: string;
-    noEffects: string;
   };
 };
 
 export function GameSidePanel({
   tray,
-  trayBaseScore,
   trayLengthBonus,
   trayWordMultiplier,
   trayScore,
@@ -91,20 +88,20 @@ export function GameSidePanel({
         )}
         <div className="trayScore">
           {labels.wordPoints}: {trayScore}
-          {trayLengthBonus > 0 || trayWordMultiplier > 1 ? (
-            <span className="trayScoreDetails">
-              {" "}
-              ({trayBaseScore}
-              {trayLengthBonus > 0 ? `+${trayLengthBonus}` : ""}
-              {trayWordMultiplier > 1 ? ` x${trayWordMultiplier}` : ""})
-            </span>
-          ) : null}
         </div>
         {trayLengthBonus > 0 || trayWordMultiplier > 1 ? (
           <div className="trayBonuses">
             <span>{labels.bonuses}:</span>
             {trayLengthBonus > 0 ? <span>{labels.lengthBonus} +{trayLengthBonus}</span> : null}
             {trayWordMultiplier > 1 ? <span>{labels.wordMultiplier} x{trayWordMultiplier}</span> : null}
+          </div>
+        ) : null}
+        {activeEffects.length > 0 ? (
+          <div className="trayBonuses trayEffects">
+            <span>{labels.effects}:</span>
+            {activeEffects.map((effect) => (
+              <span key={effect}>{effect}</span>
+            ))}
           </div>
         ) : null}
       </section>
@@ -153,10 +150,6 @@ export function GameSidePanel({
           <span className="iconGlyph" aria-hidden="true">{ACTION_ICONS.restart}</span>
           <span className="iconText">{isRunning ? labels.restartRound : labels.playAgain}</span>
         </button>
-      </section>
-
-      <section className="effects effectsInPanel">
-        {labels.effects}: {activeEffects.length > 0 ? activeEffects.join(" · ") : labels.noEffects}
       </section>
 
       <section className="submitted">
