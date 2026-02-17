@@ -20,6 +20,9 @@ type GameSidePanelProps = {
   labels: {
     trayPlaceholder: string;
     wordPoints: string;
+    bonuses: string;
+    lengthBonus: string;
+    wordMultiplier: string;
     submitWord: string;
     checking: string;
     backspace: string;
@@ -97,6 +100,13 @@ export function GameSidePanel({
             </span>
           ) : null}
         </div>
+        {trayLengthBonus > 0 || trayWordMultiplier > 1 ? (
+          <div className="trayBonuses">
+            <span>{labels.bonuses}:</span>
+            {trayLengthBonus > 0 ? <span>{labels.lengthBonus} +{trayLengthBonus}</span> : null}
+            {trayWordMultiplier > 1 ? <span>{labels.wordMultiplier} x{trayWordMultiplier}</span> : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="controls">

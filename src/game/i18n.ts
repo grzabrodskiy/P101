@@ -32,6 +32,9 @@ type Translations = {
   noneYet: string;
   trayPlaceholder: string;
   wordPoints: string;
+  bonuses: string;
+  lengthBonus: string;
+  wordMultiplier: string;
   roundScore: string;
   totalScore: string;
   round: string;
@@ -80,6 +83,7 @@ type Translations = {
   helpLinePowerUps: string;
   helpScoringTitle: string;
   helpLineBonusTiles: string;
+  helpLineLengthBonus: string;
   helpLineWordMultiplierStack: string;
   helpRoundsTitle: string;
   helpLineRoundsGoal: string;
@@ -120,6 +124,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "None yet",
     trayPlaceholder: "Tap letters to build a word",
     wordPoints: "Word Points",
+    bonuses: "Bonuses",
+    lengthBonus: "Length bonus",
+    wordMultiplier: "Word multiplier",
     roundScore: "Round Score",
     totalScore: "Total Score",
     round: "Round",
@@ -169,6 +176,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLinePowerUps: "Tap moving round power-ups to activate effects.",
     helpScoringTitle: "Scoring",
     helpLineBonusTiles: "x2/x3 border tiles multiply letter value; x2/x3 background tiles multiply the whole word.",
+    helpLineLengthBonus: "Longer words add a length bonus (5 letters: +4, 6: +8, 7: +16, 8-9: +32, 10: +64).",
     helpLineWordMultiplierStack: "Multiple word multipliers stack (for example x2 + x2 = x4).",
     helpRoundsTitle: "Rounds",
     helpLineRoundsGoal: "Each round has a score target (45, 60, 75, ...).",
@@ -222,6 +230,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Noch keine",
     trayPlaceholder: "Tippe Buchstaben, um ein Wort zu bilden",
     wordPoints: "Wortpunkte",
+    bonuses: "Boni",
+    lengthBonus: "Längenbonus",
+    wordMultiplier: "Wortmultiplikator",
     roundScore: "Rundenpunkte",
     totalScore: "Gesamtpunkte",
     round: "Runde",
@@ -271,6 +282,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLinePowerUps: "Tippe auf runde Power-ups, um Effekte zu aktivieren.",
     helpScoringTitle: "Punkte",
     helpLineBonusTiles: "x2/x3-Randfelder multiplizieren den Buchstabenwert; x2/x3-Hintergrundfelder multiplizieren das ganze Wort.",
+    helpLineLengthBonus: "Längere Wörter geben einen Längenbonus (5 Buchstaben: +4, 6: +8, 7: +16, 8-9: +32, 10: +64).",
     helpLineWordMultiplierStack: "Mehrere Wort-Multiplikatoren stapeln sich (z. B. x2 + x2 = x4).",
     helpRoundsTitle: "Runden",
     helpLineRoundsGoal: "Jede Runde hat ein Punkteziel (45, 60, 75, ...).",
@@ -324,6 +336,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Aucun",
     trayPlaceholder: "Touchez des lettres pour former un mot",
     wordPoints: "Points du mot",
+    bonuses: "Bonus",
+    lengthBonus: "Bonus longueur",
+    wordMultiplier: "Multiplicateur mot",
     roundScore: "Score manche",
     totalScore: "Score total",
     round: "Manche",
@@ -373,6 +388,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLinePowerUps: "Touchez les bonus ronds en mouvement pour activer les effets.",
     helpScoringTitle: "Score",
     helpLineBonusTiles: "Les tuiles x2/x3 avec bord multiplient la lettre; les tuiles x2/x3 avec fond multiplient le mot entier.",
+    helpLineLengthBonus: "Les mots plus longs donnent un bonus de longueur (5 lettres : +4, 6 : +8, 7 : +16, 8-9 : +32, 10 : +64).",
     helpLineWordMultiplierStack: "Plusieurs multiplicateurs de mot se cumulent (ex. x2 + x2 = x4).",
     helpRoundsTitle: "Manches",
     helpLineRoundsGoal: "Chaque manche a un objectif de score (45, 60, 75, ...).",
@@ -426,6 +442,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Nessuna",
     trayPlaceholder: "Tocca le lettere per formare una parola",
     wordPoints: "Punti parola",
+    bonuses: "Bonus",
+    lengthBonus: "Bonus lunghezza",
+    wordMultiplier: "Moltiplicatore parola",
     roundScore: "Punteggio round",
     totalScore: "Punteggio totale",
     round: "Round",
@@ -475,6 +494,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLinePowerUps: "Tocca i power-up rotondi in movimento per attivare gli effetti.",
     helpScoringTitle: "Punteggio",
     helpLineBonusTiles: "Le tessere x2/x3 con bordo moltiplicano la lettera; le tessere x2/x3 con sfondo moltiplicano l'intera parola.",
+    helpLineLengthBonus: "Le parole più lunghe aggiungono un bonus lunghezza (5 lettere: +4, 6: +8, 7: +16, 8-9: +32, 10: +64).",
     helpLineWordMultiplierStack: "Più moltiplicatori parola si combinano (es. x2 + x2 = x4).",
     helpRoundsTitle: "Round",
     helpLineRoundsGoal: "Ogni round ha un obiettivo punteggio (45, 60, 75, ...).",
@@ -528,6 +548,9 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     noneYet: "Пока нет",
     trayPlaceholder: "Нажимайте буквы, чтобы собрать слово",
     wordPoints: "Очки слова",
+    bonuses: "Бонусы",
+    lengthBonus: "Бонус длины",
+    wordMultiplier: "Множитель слова",
     roundScore: "Счёт раунда",
     totalScore: "Общий счёт",
     round: "Раунд",
@@ -577,6 +600,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     helpLinePowerUps: "Нажимайте на круглые бонусы, чтобы активировать эффекты.",
     helpScoringTitle: "Подсчёт очков",
     helpLineBonusTiles: "Плитки x2/x3 с рамкой умножают букву; плитки x2/x3 с фоном умножают всё слово.",
+    helpLineLengthBonus: "Длинные слова дают бонус длины (5 букв: +4, 6: +8, 7: +16, 8-9: +32, 10: +64).",
     helpLineWordMultiplierStack: "Несколько множителей слова перемножаются (например, x2 + x2 = x4).",
     helpRoundsTitle: "Раунды",
     helpLineRoundsGoal: "В каждом раунде есть цель по очкам (45, 60, 75, ...).",

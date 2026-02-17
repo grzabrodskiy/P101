@@ -3,7 +3,7 @@ export const ACTION_ICONS = {
   checking: "…",
   backspace: "←",
   clear: "🧽",
-  restart: "⟳",
+  restart: "↻",
   pause: "⏸",
   resume: "⏵",
   options: "⚙",

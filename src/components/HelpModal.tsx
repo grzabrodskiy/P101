@@ -15,6 +15,7 @@ type HelpModalProps = {
     linePowerUps: string;
     scoringTitle: string;
     lineBonusTiles: string;
+    lineLengthBonus: string;
     lineWordMultiplierStack: string;
     roundsTitle: string;
     lineRoundsGoal: string;
@@ -55,6 +56,7 @@ export function HelpModal({
         <h3>{labels.scoringTitle}</h3>
         <ul>
           <li>{labels.lineBonusTiles}</li>
+          <li>{labels.lineLengthBonus}</li>
           <li>{labels.lineWordMultiplierStack}</li>
         </ul>
 
@@ -75,6 +77,8 @@ export function HelpModal({
             </li>
           ))}
         </ul>
+
+        <p className="helpCopyright">© 2026 Organized Chaos. All rights reserved.</p>
 
         <button type="button" onClick={onClose}>
           {labels.close}

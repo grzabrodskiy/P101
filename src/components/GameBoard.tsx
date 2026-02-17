@@ -463,6 +463,7 @@ export function GameBoard({
           linePowerUps: t.helpLinePowerUps,
           scoringTitle: t.helpScoringTitle,
           lineBonusTiles: t.helpLineBonusTiles,
+          lineLengthBonus: t.helpLineLengthBonus,
           lineWordMultiplierStack: t.helpLineWordMultiplierStack,
           roundsTitle: t.helpRoundsTitle,
           lineRoundsGoal: t.helpLineRoundsGoal,
@@ -592,6 +593,9 @@ export function GameBoard({
             labels={{
               trayPlaceholder: t.trayPlaceholder,
               wordPoints: t.wordPoints,
+              bonuses: t.bonuses,
+              lengthBonus: t.lengthBonus,
+              wordMultiplier: t.wordMultiplier,
               submitWord: t.submitWord,
               checking: t.checking,
               backspace: t.backspace,
