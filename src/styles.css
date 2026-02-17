@@ -496,7 +496,7 @@ h1 {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.24);
   user-select: none;
   z-index: 6;
-  transition: box-shadow 140ms ease, transform 140ms ease;
+  transition: box-shadow 140ms ease;
 }
 
 .powerup:not(:disabled):hover {
@@ -504,7 +504,6 @@ h1 {
     0 0 0 2px rgba(255, 255, 255, 0.82),
     0 0 12px var(--powerup-glow, rgba(17, 24, 39, 0.34)),
     0 4px 12px rgba(0, 0, 0, 0.26);
-  transform: scale(1.03);
 }
 
 .powerup:disabled {

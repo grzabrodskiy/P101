@@ -18,7 +18,6 @@ export function PowerUpTile({ powerUp, disabled, helpText, onActivate }: PowerUp
       type="button"
       className={`powerup powerup-${powerUp.kind}`}
       onPointerDown={onActivate}
-      onClick={onActivate}
       disabled={disabled}
       style={{
         transform: `translate(${powerUp.x}px, ${powerUp.y}px)`,
