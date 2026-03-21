@@ -714,6 +714,10 @@ h1 {
   animation: roundBoardTurn 1000ms cubic-bezier(0.2, 0.72, 0.24, 1);
 }
 
+.gameStage-restartTurn .boardCard {
+  animation: restartBoardTurn 1040ms cubic-bezier(0.2, 0.72, 0.24, 1) both;
+}
+
 .gameOverCard {
   width: min(62%, 360px);
   padding: 18px 20px;
@@ -988,6 +992,15 @@ h1 {
   }
   100% {
     transform: rotateY(0deg);
+  }
+}
+
+@keyframes restartBoardTurn {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(360deg);
   }
 }
 

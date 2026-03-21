@@ -197,6 +197,7 @@ export function GameBoard({
   const optionsAutoPausedRef = useRef(false);
   const announcementTimeoutRef = useRef<number | null>(null);
   const roundFlipTimeoutRef = useRef<number | null>(null);
+  const restartTurnTimeoutRef = useRef<number | null>(null);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
     Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, language, speedMultiplier))
@@ -209,6 +210,7 @@ export function GameBoard({
   const [boardThemeIndex, setBoardThemeIndex] = useState(0);
   const [backFaceThemeIndex, setBackFaceThemeIndex] = useState(() => pickNextBoardTheme(0));
   const [isRoundFlipping, setIsRoundFlipping] = useState(false);
+  const [isRestartTurning, setIsRestartTurning] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(roundSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -338,7 +340,7 @@ export function GameBoard({
     }, 480);
   }
 
-  function resetRoundState(resetScore: boolean, roundNumber = currentRound) {
+  function resetRoundState(resetScore: boolean, roundNumber = currentRound, keepRestartTurn = false) {
     const nextScoreStart = resetScore ? 0 : score;
     const nextBoardThemeIndex = resetScore ? backFaceThemeIndex : boardThemeIndex;
     idRef.current = 1;
@@ -353,6 +355,10 @@ export function GameBoard({
       window.clearTimeout(roundFlipTimeoutRef.current);
       roundFlipTimeoutRef.current = null;
     }
+    if (!keepRestartTurn && restartTurnTimeoutRef.current) {
+      window.clearTimeout(restartTurnTimeoutRef.current);
+      restartTurnTimeoutRef.current = null;
+    }
 
     setTiles(Array.from({ length: baseTileCount }, () => makeTile(idRef.current++, language, speedMultiplier)));
     resetWordState();
@@ -362,6 +368,9 @@ export function GameBoard({
     setBackFaceThemeIndex(pickNextBoardTheme(nextBoardThemeIndex));
     setIsGameOver(false);
     setIsRoundFlipping(false);
+    if (!keepRestartTurn) {
+      setIsRestartTurning(false);
+    }
     setAnnouncement(null);
     setFeedbackBursts([]);
     setTimeLeft(roundSeconds);
@@ -402,6 +411,9 @@ export function GameBoard({
       }
       if (roundFlipTimeoutRef.current) {
         window.clearTimeout(roundFlipTimeoutRef.current);
+      }
+      if (restartTurnTimeoutRef.current) {
+        window.clearTimeout(restartTurnTimeoutRef.current);
       }
     };
   }, []);
@@ -686,9 +698,18 @@ export function GameBoard({
   }
 
   function startNewGame() {
-    resetRoundState(true);
-    setIsMenuOpen(false);
-    setIsHelpModalOpen(false);
+    if (isRestartTurning) return;
+
+    setIsRestartTurning(true);
+    restartTurnTimeoutRef.current = window.setTimeout(() => {
+      resetRoundState(true, 1, true);
+      setIsMenuOpen(false);
+      setIsHelpModalOpen(false);
+      restartTurnTimeoutRef.current = window.setTimeout(() => {
+        setIsRestartTurning(false);
+        restartTurnTimeoutRef.current = null;
+      }, 560);
+    }, 480);
   }
 
   function closeHelpModal() {
@@ -773,7 +794,7 @@ export function GameBoard({
         ) : null}
 
         <section
-          className={`${isGameOver ? "gameStage gameStage-gameOver" : "gameStage"}${isRoundFlipping ? " gameStage-roundFlip" : ""}`}
+          className={`${isGameOver ? "gameStage gameStage-gameOver" : "gameStage"}${isRoundFlipping ? " gameStage-roundFlip" : ""}${isRestartTurning ? " gameStage-restartTurn" : ""}`}
           style={boardThemeStyle}
         >
           <div className="boardCard">
