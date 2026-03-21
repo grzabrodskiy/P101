@@ -15,13 +15,12 @@ import {
   type RoundDurationSeconds,
   type SpeedMultiplier
 } from "../game/constants";
-import { LANGUAGE_OPTIONS, type LanguageCode, UI_TEXT } from "../game/i18n";
+import { type LanguageCode, UI_TEXT } from "../game/i18n";
 import { makePowerUp, makeTile, updateMovingEntity } from "../game/logic";
 import { rollGoalConfig } from "../game/rounds";
 import type { PowerUp, Tile } from "../game/types";
 import { useWordTray } from "../hooks/useWordTray";
 import { GameField } from "./GameField";
-import { GameHud } from "./GameHud";
 import { GameMenu } from "./GameMenu";
 import { GameSidePanel } from "./GameSidePanel";
 import { HelpModal } from "./HelpModal";
@@ -42,6 +41,16 @@ type GameBoardProps = {
   onOpenOptions: () => void;
 };
 
+function blendColor(from: [number, number, number], to: [number, number, number], amount: number) {
+  const mix = Math.max(0, Math.min(1, amount));
+  const [r1, g1, b1] = from;
+  const [r2, g2, b2] = to;
+  const r = Math.round(r1 + (r2 - r1) * mix);
+  const g = Math.round(g1 + (g2 - g1) * mix);
+  const b = Math.round(b1 + (b2 - b1) * mix);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export function GameBoard({
   language,
   roundSeconds,
@@ -61,6 +70,7 @@ export function GameBoard({
   const powerUpRespawnAtRef = useRef(0);
   const mountedRef = useRef(false);
   const optionsAutoPausedRef = useRef(false);
+  const announcementTimeoutRef = useRef<number | null>(null);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
     Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, language, speedMultiplier))
@@ -68,15 +78,15 @@ export function GameBoard({
   const [score, setScore] = useState(0);
   const [currentRound, setCurrentRound] = useState(1);
   const [status, setStatus] = useState(t.initialStatus);
+  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const [statusFlash, setStatusFlash] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(roundSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [helpAutoPaused, setHelpAutoPaused] = useState(false);
-  const [isBetweenRounds, setIsBetweenRounds] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [canAdvanceRound, setCanAdvanceRound] = useState(false);
   const [roundScoreStart, setRoundScoreStart] = useState(0);
   const [feedbackBursts, setFeedbackBursts] = useState<
     Array<{ id: number; text: string; tone: "score" | "bonus" }>
@@ -101,9 +111,12 @@ export function GameBoard({
 
   const activeTileTarget = baseTileCount;
   const [goalConfig, setGoalConfig] = useState(() => rollGoalConfig(1));
-  const nextRoundGoalScore = rollGoalConfig(currentRound + 1).score;
-
   const roundScore = Math.max(0, score - roundScoreStart);
+  const displayStatus = announcement ?? statusFlash;
+  const shouldShowMessage = Boolean(displayStatus);
+  const timePressure = 1 - Math.max(0, Math.min(1, timeLeft / roundSeconds));
+  const timeColor = blendColor([243, 234, 215], [215, 98, 76], timePressure);
+
   const {
     tray,
     submittedWords,
@@ -135,11 +148,24 @@ export function GameBoard({
       setStatus(t.statusGreatWord(wordUpper, points, ""));
     }
   });
+
   function pushFeedbackBurst(text: string, tone: "score" | "bonus", lifetimeMs = 900) {
     const id = feedbackIdRef.current++;
     setFeedbackBursts((prev) => [...prev, { id, text, tone }]);
     setTimeout(() => {
       setFeedbackBursts((prev) => prev.filter((entry) => entry.id !== id));
+    }, lifetimeMs);
+  }
+
+  function showAnnouncement(message: string, lifetimeMs = 2200) {
+    if (announcementTimeoutRef.current) {
+      window.clearTimeout(announcementTimeoutRef.current);
+    }
+
+    setAnnouncement(message);
+    announcementTimeoutRef.current = window.setTimeout(() => {
+      setAnnouncement(null);
+      announcementTimeoutRef.current = null;
     }, lifetimeMs);
   }
 
@@ -149,12 +175,17 @@ export function GameBoard({
     tickRef.current = 0;
     powerUpRespawnAtRef.current = 0;
 
+    if (announcementTimeoutRef.current) {
+      window.clearTimeout(announcementTimeoutRef.current);
+      announcementTimeoutRef.current = null;
+    }
+
     setTiles(Array.from({ length: baseTileCount }, () => makeTile(idRef.current++, language, speedMultiplier)));
     resetWordState();
     setRoundScoreStart(nextScoreStart);
     setGoalConfig(rollGoalConfig(roundNumber));
-    setCanAdvanceRound(false);
     setIsGameOver(false);
+    setAnnouncement(null);
     setFeedbackBursts([]);
     setTimeLeft(roundSeconds);
     setIsRunning(true);
@@ -171,7 +202,6 @@ export function GameBoard({
       setScore(0);
       setCurrentRound(1);
       setGoalConfig(rollGoalConfig(1));
-      setIsBetweenRounds(false);
       setIsGameOver(false);
     }
 
@@ -185,6 +215,14 @@ export function GameBoard({
     }
     resetRoundState(true);
   }, [language, roundSeconds, baseTileCount, speedMultiplier, maxBounces, powerUpRespawnMs]);
+
+  useEffect(() => {
+    return () => {
+      if (announcementTimeoutRef.current) {
+        window.clearTimeout(announcementTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const loop = (now: number) => {
@@ -258,13 +296,24 @@ export function GameBoard({
         if (isFrozen) return prev;
         if (prev <= 1) {
           const scoreGoalMet = roundScore >= goalConfig.score;
-          setCanAdvanceRound(scoreGoalMet);
+
+          if (scoreGoalMet) {
+            const nextRound = currentRound + 1;
+            const nextGoal = rollGoalConfig(nextRound);
+            const nextRoundStatus = t.statusRoundStart(nextRound, nextGoal.score);
+
+            setCurrentRound(nextRound);
+            setRoundScoreStart(score);
+            setGoalConfig(nextGoal);
+            setStatus(nextRoundStatus);
+            showAnnouncement(nextRoundStatus);
+            return roundSeconds;
+          }
 
           setIsRunning(false);
           setIsPaused(true);
-          setIsBetweenRounds(scoreGoalMet);
-          setIsGameOver(!scoreGoalMet);
-          setStatus(scoreGoalMet ? `${t.round} ${currentRound} ${t.timeUpStatus}` : t.statusScoreRequired(goalConfig.score));
+          setIsGameOver(true);
+          setStatus(t.statusScoreRequired(goalConfig.score));
           return 0;
         }
         return prev - 1;
@@ -280,12 +329,13 @@ export function GameBoard({
     isRunning,
     isEffectivelyPaused,
     isFrozen,
-    t.timeUpStatus,
+    t.statusRoundStart,
     t.statusScoreRequired,
-    t.round,
     currentRound,
     goalConfig,
-    roundScore
+    roundScore,
+    roundSeconds,
+    score
   ]);
 
   useEffect(() => {
@@ -323,6 +373,20 @@ export function GameBoard({
     setIsRefreshing(false);
     setStatus(t.bombRefreshComplete);
   }, [isRefreshing, tiles.length, activeTileTarget, t.bombRefreshComplete]);
+
+  useEffect(() => {
+    if (isGameOver || status === t.initialStatus) {
+      setStatusFlash(null);
+      return;
+    }
+
+    setStatusFlash(status);
+    const timeout = window.setTimeout(() => {
+      setStatusFlash((current) => (current === status ? null : current));
+    }, 3200);
+
+    return () => window.clearTimeout(timeout);
+  }, [status, t.initialStatus, isGameOver]);
 
   useEffect(() => {
     if (!explosionPulse) return undefined;
@@ -420,14 +484,6 @@ export function GameBoard({
     setIsHelpModalOpen(false);
   }
 
-  function startNextRound() {
-    if (!canAdvanceRound) return;
-    const nextRound = currentRound + 1;
-    setCurrentRound(nextRound);
-    setIsBetweenRounds(false);
-    resetRoundState(false, nextRound);
-  }
-
   function togglePauseResume() {
     if (!isRunning) return;
     setIsPaused((prev) => {
@@ -472,23 +528,11 @@ export function GameBoard({
         }}
       />
 
-      {isBetweenRounds && (
-        <div className="modalBackdrop" role="presentation">
-          <section className="languageModal roundIntroModal" role="dialog" aria-modal="true" aria-label={t.nextRound}>
-            <h2>{t.round} {currentRound + 1}</h2>
-            <p>{t.goalScore(nextRoundGoalScore)}</p>
-            <button type="button" onClick={startNextRound}>
-              {t.startRound}
-            </button>
-          </section>
-        </div>
-      )}
-
       {isGameOver && (
         <div className="modalBackdrop" role="presentation">
           <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.matchComplete}>
             <h2>{t.matchComplete}</h2>
-            <p>{t.totalScore}: {score}</p>
+            <p>{t.finalScore}: {score}</p>
             <button type="button" onClick={startNewGame}>
               {t.playMatchAgain}
             </button>
@@ -496,45 +540,45 @@ export function GameBoard({
         </div>
       )}
 
-      <section className="topBar">
-        <h1>{t.title}</h1>
-        <GameMenu
-          isOpen={isMenuOpen}
-          isPaused={isPaused}
-          isRunning={isRunning}
-          onToggle={() => setIsMenuOpen((prev) => !prev)}
-          onPauseResume={togglePauseResume}
-          onOpenOptions={() => {
-            onOpenOptions();
-            setIsMenuOpen(false);
-          }}
-          onOpenHelp={() => {
-            if (isRunning && !isPaused) {
-              setIsPaused(true);
-              setStatus(t.pausedStatus);
-              setHelpAutoPaused(true);
-            } else {
-              setHelpAutoPaused(false);
-            }
-            setIsHelpModalOpen(true);
-            setIsMenuOpen(false);
-          }}
-          onNewGame={startNewGame}
-          labels={{
-            menuButton: t.menuButton,
-            menuTitle: t.menuTitle,
-            options: t.options,
-            help: t.help,
-            pause: t.pause,
-            resume: t.resume,
-            newGame: t.newGame,
-            closeMenu: t.closeMenu
-          }}
-        />
-      </section>
+      <section className="gameShell">
+        <header className="gameHeader">
+          <GameMenu
+            isOpen={isMenuOpen}
+            isPaused={isPaused}
+            isRunning={isRunning}
+            onToggle={() => setIsMenuOpen((prev) => !prev)}
+            onPauseResume={togglePauseResume}
+            onOpenOptions={() => {
+              onOpenOptions();
+              setIsMenuOpen(false);
+            }}
+            onOpenHelp={() => {
+              if (isRunning && !isPaused) {
+                setIsPaused(true);
+                setStatus(t.pausedStatus);
+                setHelpAutoPaused(true);
+              } else {
+                setHelpAutoPaused(false);
+              }
+              setIsHelpModalOpen(true);
+              setIsMenuOpen(false);
+            }}
+            onNewGame={startNewGame}
+            labels={{
+              menuButton: "...",
+              menuTitle: t.menuTitle,
+              options: t.options,
+              help: t.help,
+              pause: t.pause,
+              resume: t.resume,
+              newGame: t.newGame,
+              closeMenu: t.closeMenu
+            }}
+          />
+          <h1>{t.title}</h1>
+        </header>
 
-      <section className="gameLayout">
-        <section className="boardColumn">
+        <section className="gameStage">
           <GameField
             tiles={tiles}
             powerUp={powerUp}
@@ -551,61 +595,71 @@ export function GameBoard({
             onPointerLeave={() => {}}
             powerUpHelpByKind={t.powerUpHelp}
           />
-          <p className="status statusUnderBoard">{status}</p>
+
+          <div className="boardOverlay" aria-hidden="true">
+            <section className="cornerStat cornerStat-topLeft">
+              <span className="cornerLabel">{t.round}</span>
+              <strong className="cornerValue">{currentRound}</strong>
+            </section>
+
+            <section className="cornerStat cornerStat-topRight">
+              <span className="cornerLabel">{t.timeLeft}</span>
+              <strong className="cornerValue" style={{ color: timeColor }}>{timeLeft}s</strong>
+            </section>
+
+            <section className="cornerStat cornerStat-bottomLeft">
+              <span className="cornerLabel">{t.roundScore}</span>
+              <strong className="cornerValue">{roundScore}/{goalConfig.score}</strong>
+            </section>
+
+            <section className="cornerStat cornerStat-bottomRight">
+              <span className="cornerLabel">{t.totalScore}</span>
+              <strong className="cornerValue">{score}</strong>
+            </section>
+          </div>
+
+          {shouldShowMessage ? (
+            <section
+              key={displayStatus ?? "message"}
+              className={`stageMessage${announcement ? " stageMessage-announce" : ""}`}
+            >
+              <p className="status">{displayStatus}</p>
+            </section>
+          ) : null}
         </section>
 
-        <section className="rightColumn">
-          <GameHud
-            roundScoreProgress={`${roundScore}/${goalConfig.score}`}
-            roundGoalMet={roundScore >= goalConfig.score}
-            totalScore={score}
-            timeLeft={timeLeft}
-            roundLabel={`${currentRound}`}
-            letterCount={tiles.length}
-            languageLabel={LANGUAGE_OPTIONS.find((option) => option.code === language)?.label ?? language}
-            labels={{
-              roundScore: t.roundScore,
-              totalScore: t.totalScore,
-              round: t.round,
-              timeLeft: t.timeLeft,
-              flyingLetters: t.flyingLetters,
-              language: t.language
-            }}
-          />
-
-          <GameSidePanel
-            tray={tray}
-            trayLengthBonus={trayLengthBonus}
-            trayWordMultiplier={trayWordMultiplier}
-            trayScore={trayScore}
-            isChecking={isChecking}
-            submitDisabled={!canSubmit}
-            isRunning={isRunning}
-            isRefreshing={isRefreshing || isEffectivelyPaused}
-            activeEffects={activeEffects}
-            submittedWords={submittedWords}
-            onSubmitWord={submitWord}
-            onBackspace={removeLast}
-            onClear={clear}
-            onRestart={startNewGame}
-            labels={{
-              trayPlaceholder: t.trayPlaceholder,
-              wordPoints: t.wordPoints,
-              bonuses: t.bonuses,
-              lengthBonus: t.lengthBonus,
-              wordMultiplier: t.wordMultiplier,
-              submitWord: t.submitWord,
-              checking: t.checking,
-              backspace: t.backspace,
-              clear: t.clear,
-              restartRound: t.newGame,
-              playAgain: t.newGame,
-              acceptedWords: t.acceptedWords,
-              noneYet: t.noneYet,
-              effects: t.effects
-            }}
-          />
-        </section>
+        <GameSidePanel
+          tray={tray}
+          trayLengthBonus={trayLengthBonus}
+          trayWordMultiplier={trayWordMultiplier}
+          trayScore={trayScore}
+          isChecking={isChecking}
+          submitDisabled={!canSubmit}
+          isRunning={isRunning}
+          isRefreshing={isRefreshing || isEffectivelyPaused}
+          activeEffects={activeEffects}
+          submittedWords={submittedWords}
+          onSubmitWord={submitWord}
+          onBackspace={removeLast}
+          onClear={clear}
+          onRestart={startNewGame}
+          labels={{
+            trayPlaceholder: t.trayPlaceholder,
+            wordPoints: t.wordPoints,
+            bonuses: t.bonuses,
+            lengthBonus: t.lengthBonus,
+            wordMultiplier: t.wordMultiplier,
+            submitWord: language === "en" ? "Submit" : t.submitWord,
+            checking: t.checking,
+            backspace: t.backspace,
+            clear: t.clear,
+            restartRound: t.newGame,
+            playAgain: t.newGame,
+            acceptedWords: t.acceptedWords,
+            noneYet: t.noneYet,
+            effects: t.effects
+          }}
+        />
       </section>
     </>
   );

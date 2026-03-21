@@ -1,4 +1,4 @@
-import { TILE_SIZE } from "../game/constants";
+import { FIELD_SIZE, TILE_SIZE } from "../game/constants";
 import { getEntityOpacity } from "../game/logic";
 import type { Tile } from "../game/types";
 
@@ -34,10 +34,11 @@ export function LetterTile({ tile, disabled, slowActive, onCollect }: LetterTile
       onPointerDown={() => onCollect(tile.id)}
       disabled={disabled}
       style={{
-        transform: `translate(${tile.x}px, ${tile.y}px)`,
+        left: `${(tile.x / FIELD_SIZE) * 100}%`,
+        top: `${(tile.y / FIELD_SIZE) * 100}%`,
         opacity: getEntityOpacity(tile.state, tile.stateAge),
-        width: TILE_SIZE,
-        height: TILE_SIZE
+        width: `${(TILE_SIZE / FIELD_SIZE) * 100}%`,
+        height: `${(TILE_SIZE / FIELD_SIZE) * 100}%`
       }}
       aria-label={`Letter ${tile.char}`}
     >

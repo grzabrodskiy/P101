@@ -1,6 +1,5 @@
 import type { PointerEvent as ReactPointerEvent, SyntheticEvent } from "react";
 
-import { FIELD_SIZE } from "../game/constants";
 import type { PowerUp, PowerUpKind, Tile } from "../game/types";
 import { LetterTile } from "./LetterTile";
 import { PowerUpTile } from "./PowerUpTile";
@@ -41,7 +40,6 @@ export function GameField({
   return (
     <section
       className={`field${explosionPulse ? " field-exploding" : ""}${isFreezeActive ? " field-freeze-active" : ""}${isWallActive ? " field-wall-active" : ""}${isSlowActive ? " field-slow-active" : ""}`}
-      style={{ width: FIELD_SIZE, height: FIELD_SIZE }}
       aria-label="Flying letter area"
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}

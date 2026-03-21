@@ -36,15 +36,10 @@ type GameSidePanelProps = {
 
 export function GameSidePanel({
   tray,
-  trayLengthBonus,
-  trayWordMultiplier,
-  trayScore,
   isChecking,
   submitDisabled,
   isRunning,
   isRefreshing,
-  activeEffects,
-  submittedWords,
   onSubmitWord,
   onBackspace,
   onClear,
@@ -52,8 +47,8 @@ export function GameSidePanel({
   labels
 }: GameSidePanelProps) {
   return (
-    <section className="sidePanel">
-      <section className="tray" aria-label="Word builder">
+    <section className="controlBar">
+      <section className="selectedWordPanel" aria-label="Word builder">
         {tray.length === 0 ? (
           <div className="trayWord">{labels.trayPlaceholder}</div>
         ) : (
@@ -86,27 +81,9 @@ export function GameSidePanel({
             })}
           </div>
         )}
-        <div className="trayScore">
-          {labels.wordPoints}: {trayScore}
-        </div>
-        {trayLengthBonus > 0 || trayWordMultiplier > 1 ? (
-          <div className="trayBonuses">
-            <span>{labels.bonuses}:</span>
-            {trayLengthBonus > 0 ? <span>{labels.lengthBonus} +{trayLengthBonus}</span> : null}
-            {trayWordMultiplier > 1 ? <span>{labels.wordMultiplier} x{trayWordMultiplier}</span> : null}
-          </div>
-        ) : null}
-        {activeEffects.length > 0 ? (
-          <div className="trayBonuses trayEffects">
-            <span>{labels.effects}:</span>
-            {activeEffects.map((effect) => (
-              <span key={effect}>{effect}</span>
-            ))}
-          </div>
-        ) : null}
       </section>
 
-      <section className="controls">
+      <section className="controls controlsCompact">
         <button
           type="button"
           onClick={onSubmitWord}
@@ -150,25 +127,6 @@ export function GameSidePanel({
           <span className="iconGlyph" aria-hidden="true">{ACTION_ICONS.restart}</span>
           <span className="iconText">{isRunning ? labels.restartRound : labels.playAgain}</span>
         </button>
-      </section>
-
-      <section className="submitted">
-        <h2>{labels.acceptedWords}</h2>
-        {submittedWords.length === 0 ? (
-          <p className="empty">{labels.noneYet}</p>
-        ) : (
-          <ul>
-            {submittedWords
-              .slice()
-              .reverse()
-              .map((entry, index) => (
-                <li key={`${entry.word}-${index}`}>
-                  <span>{entry.word}</span>
-                  <strong>+{entry.points}</strong>
-                </li>
-              ))}
-          </ul>
-        )}
       </section>
     </section>
   );

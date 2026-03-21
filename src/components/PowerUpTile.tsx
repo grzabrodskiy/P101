@@ -1,6 +1,6 @@
 import type { SyntheticEvent } from "react";
 
-import { POWERUP_SIZE } from "../game/constants";
+import { FIELD_SIZE, POWERUP_SIZE } from "../game/constants";
 import { getEntityOpacity } from "../game/logic";
 import type { PowerUp } from "../game/types";
 import { PowerUpIcon } from "./PowerUpIcon";
@@ -20,10 +20,11 @@ export function PowerUpTile({ powerUp, disabled, helpText, onActivate }: PowerUp
       onPointerDown={onActivate}
       disabled={disabled}
       style={{
-        transform: `translate(${powerUp.x}px, ${powerUp.y}px)`,
+        left: `${(powerUp.x / FIELD_SIZE) * 100}%`,
+        top: `${(powerUp.y / FIELD_SIZE) * 100}%`,
         opacity: getEntityOpacity(powerUp.state, powerUp.stateAge),
-        width: POWERUP_SIZE,
-        height: POWERUP_SIZE
+        width: `${(POWERUP_SIZE / FIELD_SIZE) * 100}%`,
+        height: `${(POWERUP_SIZE / FIELD_SIZE) * 100}%`
       }}
       aria-label={helpText}
       title={helpText}

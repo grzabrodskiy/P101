@@ -92,6 +92,7 @@ type Translations = {
   closeHelp: string;
   pausedStatus: string;
   statusChecking: (word: string) => string;
+  statusRoundStart: (round: number, points: number) => string;
   statusRoundBonus: (completed: number, total: number, bonus: number) => string;
   statusScoreRequired: (points: number) => string;
   statusGreatWord: (word: string, points: number, suffix: string) => string;
@@ -185,6 +186,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Close",
     pausedStatus: "Game paused.",
     statusChecking: (word) => `Checking "${word}"...`,
+    statusRoundStart: (round, points) => `Round ${round} begins. Reach ${points} points.`,
     statusRoundBonus: (completed, total, bonus) =>
       `Goals completed ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Reach ${points} score this round to advance.`,
@@ -291,6 +293,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Schließen",
     pausedStatus: "Spiel pausiert.",
     statusChecking: (word) => `Prüfe "${word}"...`,
+    statusRoundStart: (round, points) => `Runde ${round} beginnt. Erreiche ${points} Punkte.`,
     statusRoundBonus: (completed, total, bonus) =>
       `Ziele erreicht ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Erreiche ${points} Punkte in dieser Runde zum Weiterkommen.`,
@@ -397,6 +400,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Fermer",
     pausedStatus: "Jeu en pause.",
     statusChecking: (word) => `Vérification de "${word}"...`,
+    statusRoundStart: (round, points) => `La manche ${round} commence. Atteins ${points} points.`,
     statusRoundBonus: (completed, total, bonus) =>
       `Objectifs atteints ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Atteins ${points} points ce round pour avancer.`,
@@ -503,6 +507,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Chiudi",
     pausedStatus: "Gioco in pausa.",
     statusChecking: (word) => `Controllo "${word}"...`,
+    statusRoundStart: (round, points) => `Il round ${round} inizia. Raggiungi ${points} punti.`,
     statusRoundBonus: (completed, total, bonus) =>
       `Obiettivi completati ${completed}/${total}. Bonus +${bonus}.`,
     statusScoreRequired: (points) => `Raggiungi ${points} punti in questo round per avanzare.`,
@@ -609,6 +614,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     closeHelp: "Закрыть",
     pausedStatus: "Игра на паузе.",
     statusChecking: (word) => `Проверка "${word}"...`,
+    statusRoundStart: (round, points) => `Раунд ${round} начался. Наберите ${points} очков.`,
     statusRoundBonus: (completed, total, bonus) =>
       `Цели выполнены ${completed}/${total}. Бонус +${bonus}.`,
     statusScoreRequired: (points) => `Наберите ${points} очков в раунде, чтобы перейти дальше.`,
