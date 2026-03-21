@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 
 import {
   BASE_TILE_COUNT,
   EXPLOSION_MS,
+  FIELD_SIZE,
   MAX_EFFECT_SECONDS,
   POWERUP_SIZE,
   POWERUP_META,
   POWERUP_TYPES,
   REFRESH_SPAWN_MS,
   ROUND_PACE_STEP,
+  SCRABBLE_VALUES,
   TILE_SIZE,
   type BaseTileCount,
   type MaxBounces,
@@ -41,6 +43,75 @@ type GameBoardProps = {
   onOpenOptions: () => void;
 };
 
+type BoardTheme = {
+  glowTop: string;
+  glowBottom: string;
+  gridLine: string;
+  backgroundStart: string;
+  backgroundMid: string;
+  backgroundEnd: string;
+};
+
+type BackFaceTile = {
+  id: number;
+  char: string;
+  value: number;
+  left: number;
+  top: number;
+  toneClass: string;
+};
+
+const BOARD_THEMES: BoardTheme[] = [
+  {
+    glowTop: "rgba(244, 234, 208, 0.12)",
+    glowBottom: "rgba(25, 56, 104, 0.46)",
+    gridLine: "rgba(236, 220, 188, 0.06)",
+    backgroundStart: "#4a628f",
+    backgroundMid: "#314768",
+    backgroundEnd: "#121a28"
+  },
+  {
+    glowTop: "rgba(245, 224, 210, 0.11)",
+    glowBottom: "rgba(104, 24, 42, 0.44)",
+    gridLine: "rgba(238, 215, 198, 0.05)",
+    backgroundStart: "#6a3344",
+    backgroundMid: "#482433",
+    backgroundEnd: "#1c0d16"
+  },
+  {
+    glowTop: "rgba(236, 231, 216, 0.1)",
+    glowBottom: "rgba(27, 79, 122, 0.42)",
+    gridLine: "rgba(228, 223, 212, 0.05)",
+    backgroundStart: "#34557d",
+    backgroundMid: "#213a57",
+    backgroundEnd: "#0d1523"
+  },
+  {
+    glowTop: "rgba(246, 226, 191, 0.12)",
+    glowBottom: "rgba(124, 66, 18, 0.44)",
+    gridLine: "rgba(240, 214, 176, 0.05)",
+    backgroundStart: "#72522d",
+    backgroundMid: "#4f381d",
+    backgroundEnd: "#211509"
+  },
+  {
+    glowTop: "rgba(236, 222, 246, 0.11)",
+    glowBottom: "rgba(69, 33, 104, 0.44)",
+    gridLine: "rgba(229, 214, 239, 0.05)",
+    backgroundStart: "#5a4778",
+    backgroundMid: "#3b2d52",
+    backgroundEnd: "#170f22"
+  },
+  {
+    glowTop: "rgba(243, 232, 211, 0.11)",
+    glowBottom: "rgba(19, 44, 90, 0.46)",
+    gridLine: "rgba(236, 220, 188, 0.05)",
+    backgroundStart: "#314b76",
+    backgroundMid: "#203250",
+    backgroundEnd: "#0d1522"
+  }
+];
+
 function blendColor(from: [number, number, number], to: [number, number, number], amount: number) {
   const mix = Math.max(0, Math.min(1, amount));
   const [r1, g1, b1] = from;
@@ -49,6 +120,59 @@ function blendColor(from: [number, number, number], to: [number, number, number]
   const g = Math.round(g1 + (g2 - g1) * mix);
   const b = Math.round(b1 + (b2 - b1) * mix);
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+function createSeededRandom(seed: number) {
+  let state = (seed + 1) * 2654435761;
+
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function makeBackFaceTiles(seed: number): BackFaceTile[] {
+  const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const rows = 9;
+  const columns = 9;
+  const padding = 12;
+  const gapX = (FIELD_SIZE - padding * 2 - columns * TILE_SIZE) / (columns - 1);
+  const gapY = (FIELD_SIZE - padding * 2 - rows * TILE_SIZE) / (rows - 1);
+  const random = createSeededRandom(seed);
+
+  return Array.from({ length: rows * columns }, (_, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const char = glyphs[Math.floor(random() * glyphs.length)] ?? "E";
+    const toneRoll = random();
+    const toneClass =
+      toneRoll > 0.94
+        ? "tile-triple-word"
+        : toneRoll > 0.87
+          ? "tile-triple-letter"
+          : toneRoll > 0.72
+            ? "tile-double-word"
+            : toneRoll > 0.5
+              ? "tile-double-letter"
+              : "";
+
+    return {
+      id: index,
+      char,
+      value: SCRABBLE_VALUES[char as keyof typeof SCRABBLE_VALUES] ?? 1,
+      left: ((padding + column * (TILE_SIZE + gapX)) / FIELD_SIZE) * 100,
+      top: ((padding + row * (TILE_SIZE + gapY)) / FIELD_SIZE) * 100,
+      toneClass
+    };
+  });
+}
+
+function pickNextBoardTheme(currentIndex: number) {
+  const candidates = BOARD_THEMES
+    .map((_, index) => index)
+    .filter((index) => index !== currentIndex);
+
+  return candidates[Math.floor(Math.random() * candidates.length)] ?? currentIndex;
 }
 
 export function GameBoard({
@@ -71,6 +195,7 @@ export function GameBoard({
   const mountedRef = useRef(false);
   const optionsAutoPausedRef = useRef(false);
   const announcementTimeoutRef = useRef<number | null>(null);
+  const roundFlipTimeoutRef = useRef<number | null>(null);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
     Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, language, speedMultiplier))
@@ -80,6 +205,9 @@ export function GameBoard({
   const [status, setStatus] = useState(t.initialStatus);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [statusFlash, setStatusFlash] = useState<string | null>(null);
+  const [boardThemeIndex, setBoardThemeIndex] = useState(0);
+  const [backFaceThemeIndex, setBackFaceThemeIndex] = useState(() => pickNextBoardTheme(0));
+  const [isRoundFlipping, setIsRoundFlipping] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(roundSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -116,6 +244,26 @@ export function GameBoard({
   const shouldShowMessage = Boolean(displayStatus);
   const timePressure = 1 - Math.max(0, Math.min(1, timeLeft / roundSeconds));
   const timeColor = blendColor([243, 234, 215], [215, 98, 76], timePressure);
+  const boardTheme = BOARD_THEMES[boardThemeIndex] ?? BOARD_THEMES[0];
+  const backFaceTheme = BOARD_THEMES[backFaceThemeIndex] ?? boardTheme;
+  const backFaceTiles = useMemo(() => makeBackFaceTiles(backFaceThemeIndex + currentRound), [backFaceThemeIndex, currentRound]);
+  const tileSizePercent = `${(TILE_SIZE / FIELD_SIZE) * 100}%`;
+  const boardThemeStyle = {
+    "--board-glow-top": boardTheme.glowTop,
+    "--board-glow-bottom": boardTheme.glowBottom,
+    "--board-grid-line": boardTheme.gridLine,
+    "--board-bg-start": boardTheme.backgroundStart,
+    "--board-bg-mid": boardTheme.backgroundMid,
+    "--board-bg-end": boardTheme.backgroundEnd
+  } as CSSProperties;
+  const backFaceThemeStyle = {
+    "--board-glow-top": backFaceTheme.glowTop,
+    "--board-glow-bottom": backFaceTheme.glowBottom,
+    "--board-grid-line": backFaceTheme.gridLine,
+    "--board-bg-start": backFaceTheme.backgroundStart,
+    "--board-bg-mid": backFaceTheme.backgroundMid,
+    "--board-bg-end": backFaceTheme.backgroundEnd
+  } as CSSProperties;
 
   const {
     tray,
@@ -169,8 +317,29 @@ export function GameBoard({
     }, lifetimeMs);
   }
 
+  function triggerRoundTurn() {
+    if (roundFlipTimeoutRef.current) {
+      window.clearTimeout(roundFlipTimeoutRef.current);
+      roundFlipTimeoutRef.current = null;
+    }
+
+    const nextThemeIndex = backFaceThemeIndex;
+    const followingThemeIndex = pickNextBoardTheme(nextThemeIndex);
+    setIsRoundFlipping(true);
+
+    roundFlipTimeoutRef.current = window.setTimeout(() => {
+      setBoardThemeIndex(nextThemeIndex);
+      setBackFaceThemeIndex(followingThemeIndex);
+      roundFlipTimeoutRef.current = window.setTimeout(() => {
+        setIsRoundFlipping(false);
+        roundFlipTimeoutRef.current = null;
+      }, 520);
+    }, 480);
+  }
+
   function resetRoundState(resetScore: boolean, roundNumber = currentRound) {
     const nextScoreStart = resetScore ? 0 : score;
+    const nextBoardThemeIndex = resetScore ? backFaceThemeIndex : boardThemeIndex;
     idRef.current = 1;
     tickRef.current = 0;
     powerUpRespawnAtRef.current = 0;
@@ -179,12 +348,19 @@ export function GameBoard({
       window.clearTimeout(announcementTimeoutRef.current);
       announcementTimeoutRef.current = null;
     }
+    if (roundFlipTimeoutRef.current) {
+      window.clearTimeout(roundFlipTimeoutRef.current);
+      roundFlipTimeoutRef.current = null;
+    }
 
     setTiles(Array.from({ length: baseTileCount }, () => makeTile(idRef.current++, language, speedMultiplier)));
     resetWordState();
     setRoundScoreStart(nextScoreStart);
     setGoalConfig(rollGoalConfig(roundNumber));
+    setBoardThemeIndex(nextBoardThemeIndex);
+    setBackFaceThemeIndex(pickNextBoardTheme(nextBoardThemeIndex));
     setIsGameOver(false);
+    setIsRoundFlipping(false);
     setAnnouncement(null);
     setFeedbackBursts([]);
     setTimeLeft(roundSeconds);
@@ -220,6 +396,9 @@ export function GameBoard({
     return () => {
       if (announcementTimeoutRef.current) {
         window.clearTimeout(announcementTimeoutRef.current);
+      }
+      if (roundFlipTimeoutRef.current) {
+        window.clearTimeout(roundFlipTimeoutRef.current);
       }
     };
   }, []);
@@ -307,6 +486,7 @@ export function GameBoard({
             setGoalConfig(nextGoal);
             setStatus(nextRoundStatus);
             showAnnouncement(nextRoundStatus);
+            triggerRoundTurn();
             return roundSeconds;
           }
 
@@ -484,15 +664,6 @@ export function GameBoard({
     setIsHelpModalOpen(false);
   }
 
-  function togglePauseResume() {
-    if (!isRunning) return;
-    setIsPaused((prev) => {
-      const next = !prev;
-      setStatus(next ? t.pausedStatus : t.initialStatus);
-      return next;
-    });
-  }
-
   function closeHelpModal() {
     setIsHelpModalOpen(false);
     if (helpAutoPaused && isRunning) {
@@ -528,26 +699,11 @@ export function GameBoard({
         }}
       />
 
-      {isGameOver && (
-        <div className="modalBackdrop" role="presentation">
-          <section className="languageModal" role="dialog" aria-modal="true" aria-label={t.matchComplete}>
-            <h2>{t.matchComplete}</h2>
-            <p>{t.finalScore}: {score}</p>
-            <button type="button" onClick={startNewGame}>
-              {t.playMatchAgain}
-            </button>
-          </section>
-        </div>
-      )}
-
       <section className="gameShell">
         <header className="gameHeader">
           <GameMenu
             isOpen={isMenuOpen}
-            isPaused={isPaused}
-            isRunning={isRunning}
             onToggle={() => setIsMenuOpen((prev) => !prev)}
-            onPauseResume={togglePauseResume}
             onOpenOptions={() => {
               onOpenOptions();
               setIsMenuOpen(false);
@@ -563,69 +719,115 @@ export function GameBoard({
               setIsHelpModalOpen(true);
               setIsMenuOpen(false);
             }}
-            onNewGame={startNewGame}
             labels={{
               menuButton: "...",
               menuTitle: t.menuTitle,
               options: t.options,
               help: t.help,
-              pause: t.pause,
-              resume: t.resume,
-              newGame: t.newGame,
               closeMenu: t.closeMenu
             }}
           />
           <h1>{t.title}</h1>
         </header>
 
-        <section className="gameStage">
-          <GameField
-            tiles={tiles}
-            powerUp={powerUp}
-            isRunning={isRunning}
-            isRefreshing={isRefreshing || isEffectivelyPaused}
-            explosionPulse={explosionPulse}
-            isFreezeActive={isFrozen}
-            isWallActive={isWallActive}
-            isSlowActive={isSlowActive}
-            feedbackBursts={feedbackBursts}
-            onCollectTile={collectTile}
-            onActivatePowerUp={activatePowerUp}
-            onPointerMove={() => {}}
-            onPointerLeave={() => {}}
-            powerUpHelpByKind={t.powerUpHelp}
-          />
+        <section className="boardShell">
+        {submittedWords.length > 0 ? (
+          <aside className="submittedWordsRail" aria-hidden="true">
+            {submittedWords
+              .slice(-8)
+              .reverse()
+              .map((entry, index) => (
+                <div key={`${entry.word}-${index}`} className="submittedWordEntry">
+                  <span>{entry.word}</span>
+                  <strong>+{entry.points}</strong>
+                </div>
+              ))}
+          </aside>
+        ) : null}
 
-          <div className="boardOverlay" aria-hidden="true">
-            <section className="cornerStat cornerStat-topLeft">
-              <span className="cornerLabel">{t.round}</span>
-              <strong className="cornerValue">{currentRound}</strong>
-            </section>
+        <section
+          className={`${isGameOver ? "gameStage gameStage-gameOver" : "gameStage"}${isRoundFlipping ? " gameStage-roundFlip" : ""}`}
+          style={boardThemeStyle}
+        >
+          <div className="boardCard">
+            <div className="boardFace boardFace-front">
+              <GameField
+                tiles={tiles}
+                powerUp={powerUp}
+                isRunning={isRunning}
+                isRefreshing={isRefreshing || isEffectivelyPaused}
+                explosionPulse={explosionPulse}
+                isFreezeActive={isFrozen}
+                isWallActive={isWallActive}
+                isSlowActive={isSlowActive}
+                feedbackBursts={feedbackBursts}
+                onCollectTile={collectTile}
+                onActivatePowerUp={activatePowerUp}
+                onPointerMove={() => {}}
+                onPointerLeave={() => {}}
+                powerUpHelpByKind={t.powerUpHelp}
+              />
 
-            <section className="cornerStat cornerStat-topRight">
-              <span className="cornerLabel">{t.timeLeft}</span>
-              <strong className="cornerValue" style={{ color: timeColor }}>{timeLeft}s</strong>
-            </section>
+              <div className="boardOverlay" aria-hidden="true">
+                <section className="cornerStat cornerStat-topLeft">
+                  <span className="cornerLabel">{t.round}</span>
+                  <strong className="cornerValue">{currentRound}</strong>
+                </section>
 
-            <section className="cornerStat cornerStat-bottomLeft">
-              <span className="cornerLabel">{t.roundScore}</span>
-              <strong className="cornerValue">{roundScore}/{goalConfig.score}</strong>
-            </section>
+                <section className="cornerStat cornerStat-topRight">
+                  <span className="cornerLabel">{t.timeLeft}</span>
+                  <strong className="cornerValue" style={{ color: timeColor }}>{timeLeft}s</strong>
+                </section>
 
-            <section className="cornerStat cornerStat-bottomRight">
-              <span className="cornerLabel">{t.totalScore}</span>
-              <strong className="cornerValue">{score}</strong>
-            </section>
+                <section className="cornerStat cornerStat-bottomLeft">
+                  <span className="cornerLabel">{t.roundScore}</span>
+                  <strong className="cornerValue">{roundScore}/{goalConfig.score}</strong>
+                </section>
+
+                <section className="cornerStat cornerStat-bottomRight">
+                  <span className="cornerLabel">{t.totalScore}</span>
+                  <strong className="cornerValue">{score}</strong>
+                </section>
+              </div>
+
+              {!isGameOver && shouldShowMessage ? (
+                <section
+                  key={displayStatus ?? "message"}
+                  className={`stageMessage${announcement ? " stageMessage-announce" : ""}`}
+                >
+                  <p className="status">{displayStatus}</p>
+                </section>
+              ) : null}
+            </div>
+
+            <div className="boardFace boardFace-back" style={backFaceThemeStyle}>
+              <div className="backFaceTileField" aria-hidden="true">
+                {backFaceTiles.map((tile) => (
+                  <span
+                    key={tile.id}
+                    className={`tile backFaceTile${tile.toneClass ? ` ${tile.toneClass}` : ""}`}
+                    style={{
+                      left: `${tile.left}%`,
+                      top: `${tile.top}%`,
+                      width: tileSizePercent,
+                      height: tileSizePercent
+                    }}
+                  >
+                    <span className="letter">{tile.char}</span>
+                    <span className="value">{tile.value}</span>
+                  </span>
+                ))}
+              </div>
+              <div className="gameOverCard">
+                <p className="gameOverEyebrow">{t.matchComplete}</p>
+                <h2>{t.finalScore}: {score}</h2>
+                <button type="button" onClick={startNewGame}>
+                  {language === "en" ? "Start New Game" : t.newGame}
+                </button>
+              </div>
+            </div>
           </div>
-
-          {shouldShowMessage ? (
-            <section
-              key={displayStatus ?? "message"}
-              className={`stageMessage${announcement ? " stageMessage-announce" : ""}`}
-            >
-              <p className="status">{displayStatus}</p>
-            </section>
-          ) : null}
+        </section>
         </section>
 
         <GameSidePanel
