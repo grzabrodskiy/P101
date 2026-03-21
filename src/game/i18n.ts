@@ -212,7 +212,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   de: {
-    title: "Word Constructor",
+    title: "Wortkonstruktor",
     initialStatus: "Tippe auf fliegende Buchstaben, um ein Wort zu bilden.",
     timeUpStatus: "Zeit ist abgelaufen. Nach Neustart erneut einreichen.",
     bombRefreshComplete: "Bomben-Aktualisierung abgeschlossen.",
@@ -319,7 +319,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   fr: {
-    title: "Word Constructor",
+    title: "Constructeur de mots",
     initialStatus: "Touchez les lettres volantes pour former un mot.",
     timeUpStatus: "Le temps est écoulé. Recommencez puis soumettez.",
     bombRefreshComplete: "Rafraîchissement de la bombe terminé.",
@@ -426,7 +426,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   it: {
-    title: "Word Constructor",
+    title: "Costruttore di parole",
     initialStatus: "Tocca le lettere volanti per formare una parola.",
     timeUpStatus: "Tempo scaduto. Riavvia e invia di nuovo.",
     bombRefreshComplete: "Aggiornamento bomba completato.",
@@ -533,7 +533,7 @@ export const UI_TEXT: Record<LanguageCode, Translations> = {
     }
   },
   ru: {
-    title: "Word Constructor",
+    title: "Конструктор слов",
     initialStatus: "Нажимайте на летающие буквы, чтобы собрать слово.",
     timeUpStatus: "Время вышло. Перезапустите и отправьте снова.",
     bombRefreshComplete: "Обновление после бомбы завершено.",
