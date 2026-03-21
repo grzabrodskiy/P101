@@ -193,6 +193,7 @@ export function GameBoard({
   const feedbackIdRef = useRef(1);
   const powerUpRespawnAtRef = useRef(0);
   const mountedRef = useRef(false);
+  const menuAutoPausedRef = useRef(false);
   const optionsAutoPausedRef = useRef(false);
   const announcementTimeoutRef = useRef<number | null>(null);
   const roundFlipTimeoutRef = useRef<number | null>(null);
@@ -233,7 +234,7 @@ export function GameBoard({
   const isFrozen = freezeLeft > 0;
   const isWallActive = wallLeft > 0;
   const isSlowActive = slowLeft > 0;
-  const isEffectivelyPaused = isPaused || isOptionsOpen;
+  const isEffectivelyPaused = isPaused || isMenuOpen || isOptionsOpen || isHelpModalOpen;
   const roundPaceMultiplier = 1 + (currentRound - 1) * ROUND_PACE_STEP;
   const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
@@ -373,6 +374,8 @@ export function GameBoard({
     setFreezeLeft(0);
     setWallLeft(0);
     setSlowLeft(0);
+    menuAutoPausedRef.current = false;
+    optionsAutoPausedRef.current = false;
 
     if (resetScore) {
       setScore(0);
@@ -517,6 +520,30 @@ export function GameBoard({
     roundSeconds,
     score
   ]);
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      if (isRunning && !isPaused) {
+        setIsPaused(true);
+        setStatus(t.pausedStatus);
+        menuAutoPausedRef.current = true;
+      }
+      return;
+    }
+
+    if (menuAutoPausedRef.current && isRunning) {
+      if (isOptionsOpen || isHelpModalOpen) {
+        return;
+      }
+
+      setIsPaused(false);
+      setStatus(t.initialStatus);
+      menuAutoPausedRef.current = false;
+      return;
+    }
+
+    menuAutoPausedRef.current = false;
+  }, [isMenuOpen, isRunning, isPaused, isOptionsOpen, isHelpModalOpen, t.pausedStatus, t.initialStatus]);
 
   useEffect(() => {
     if (isOptionsOpen) {
