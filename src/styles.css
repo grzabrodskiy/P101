@@ -390,6 +390,8 @@ h1 {
   overflow: hidden;
   border-radius: 28px;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .cornerStat {
@@ -459,6 +461,8 @@ h1 {
   text-transform: uppercase;
   color: rgba(243, 234, 215, 0.76);
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .cornerValue {
@@ -466,6 +470,8 @@ h1 {
   line-height: 1;
   color: #f3ead7;
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.8),
     0 0 18px rgba(0, 0, 0, 0.22);
