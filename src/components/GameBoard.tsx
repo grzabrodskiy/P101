@@ -62,7 +62,10 @@ type BackFaceTile = {
   top: number;
   toneClass: string;
   tiltDegrees: number;
+  isBlank: boolean;
 };
+
+const GAME_OVER_BACK_FACE_TEXT = "GAME CONSTRUCTOR ";
 
 const BOARD_THEMES: BoardTheme[] = [
   {
@@ -134,7 +137,7 @@ function createSeededRandom(seed: number) {
   };
 }
 
-function makeBackFaceTiles(seed: number): BackFaceTile[] {
+function makeBackFaceTiles(seed: number, repeatedText?: string): BackFaceTile[] {
   const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const rows = 9;
   const columns = 9;
@@ -142,13 +145,20 @@ function makeBackFaceTiles(seed: number): BackFaceTile[] {
   const gapX = (FIELD_SIZE - padding * 2 - columns * TILE_SIZE) / (columns - 1);
   const gapY = (FIELD_SIZE - padding * 2 - rows * TILE_SIZE) / (rows - 1);
   const random = createSeededRandom(seed);
+  const repeatedChars = repeatedText ? Array.from(repeatedText.toLocaleUpperCase("en-US")) : null;
+  const repeatedOffset = repeatedChars?.length ? Math.floor(random() * repeatedChars.length) : 0;
 
   return Array.from({ length: rows * columns }, (_, index) => {
     const row = Math.floor(index / columns);
     const column = index % columns;
-    const char = glyphs[Math.floor(random() * glyphs.length)] ?? "E";
+    const char = repeatedChars?.length
+      ? (repeatedChars[(repeatedOffset + index) % repeatedChars.length] ?? "E")
+      : (glyphs[Math.floor(random() * glyphs.length)] ?? "E");
+    const isBlank = char.trim().length === 0;
     const toneRoll = random();
-    const toneClass =
+    const toneClass = isBlank
+      ? ""
+      :
       toneRoll > 0.94
         ? "tile-triple-word"
         : toneRoll > 0.87
@@ -162,11 +172,12 @@ function makeBackFaceTiles(seed: number): BackFaceTile[] {
     return {
       id: index,
       char,
-      value: SCRABBLE_VALUES[char as keyof typeof SCRABBLE_VALUES] ?? 1,
+      value: isBlank ? 0 : (SCRABBLE_VALUES[char as keyof typeof SCRABBLE_VALUES] ?? 1),
       left: ((padding + column * (TILE_SIZE + gapX)) / FIELD_SIZE) * 100,
       top: ((padding + row * (TILE_SIZE + gapY)) / FIELD_SIZE) * 100,
       toneClass,
-      tiltDegrees: Math.round((random() * 10 - 5) * 10) / 10
+      tiltDegrees: Math.round((random() * 10 - 5) * 10) / 10,
+      isBlank
     };
   });
 }
@@ -253,7 +264,15 @@ export function GameBoard({
   const timeColor = blendColor([243, 234, 215], [215, 98, 76], timePressure);
   const boardTheme = BOARD_THEMES[boardThemeIndex] ?? BOARD_THEMES[0];
   const backFaceTheme = BOARD_THEMES[backFaceThemeIndex] ?? boardTheme;
-  const backFaceTiles = useMemo(() => makeBackFaceTiles(backFaceThemeIndex + currentRound), [backFaceThemeIndex, currentRound]);
+  const backFaceTiles = useMemo(
+    () => makeBackFaceTiles(backFaceThemeIndex + currentRound),
+    [backFaceThemeIndex, currentRound]
+  );
+  const gameOverBackFaceTiles = useMemo(
+    () => makeBackFaceTiles(backFaceThemeIndex + currentRound + 97, GAME_OVER_BACK_FACE_TEXT),
+    [backFaceThemeIndex, currentRound]
+  );
+  const visibleBackFaceTiles = isGameOver ? gameOverBackFaceTiles : backFaceTiles;
   const tileSizePercent = `${(TILE_SIZE / FIELD_SIZE) * 100}%`;
   const boardThemeStyle = {
     "--board-glow-top": boardTheme.glowTop,
@@ -951,10 +970,10 @@ export function GameBoard({
 
                 <div className="boardFace boardFace-back" style={backFaceThemeStyle}>
                   <div className="backFaceTileField" aria-hidden="true">
-                    {backFaceTiles.map((tile) => (
+                    {visibleBackFaceTiles.map((tile) => (
                       <span
                         key={tile.id}
-                        className={`tile backFaceTile${tile.toneClass ? ` ${tile.toneClass}` : ""}`}
+                        className={`tile backFaceTile${tile.isBlank ? " backFaceTile-blank" : ""}${tile.toneClass ? ` ${tile.toneClass}` : ""}`}
                         style={{
                           left: `${tile.left}%`,
                           top: `${tile.top}%`,
@@ -963,8 +982,8 @@ export function GameBoard({
                           "--backface-tilt": `${tile.tiltDegrees}deg`
                         } as CSSProperties}
                       >
-                        <span className="letter">{tile.char}</span>
-                        <span className="value">{tile.value}</span>
+                        <span className="letter">{tile.isBlank ? "\u00A0" : tile.char}</span>
+                        {tile.isBlank ? null : <span className="value">{tile.value}</span>}
                       </span>
                     ))}
                   </div>

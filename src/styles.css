@@ -316,6 +316,10 @@ h1 {
   cursor: default;
 }
 
+.backFaceTile-blank {
+  opacity: 0;
+}
+
 .gameStage-gameOver .backFaceTile {
   transform: rotate(var(--backface-tilt, 0deg));
 }
