@@ -1,5 +1,22 @@
 import type { PowerUpKind } from "../game/types";
 import { PowerUpIcon } from "./PowerUpIcon";
+import { getShortcutKey, getShortcutLabelParts } from "./shortcutKey";
+
+function renderShortcutLabel(label: string) {
+  const parts = getShortcutLabelParts(label);
+
+  if (!parts) {
+    return label;
+  }
+
+  return (
+    <>
+      {parts.before}
+      <span className="shortcutUnderline">{parts.shortcut}</span>
+      {parts.after}
+    </>
+  );
+}
 
 type HelpModalProps = {
   isOpen: boolean;
@@ -33,6 +50,8 @@ export function HelpModal({
   labels
 }: HelpModalProps) {
   if (!isOpen) return null;
+
+  const closeShortcutKey = getShortcutKey(labels.close);
 
   return (
     <div className="modalBackdrop" role="presentation" onClick={onClose}>
@@ -80,8 +99,14 @@ export function HelpModal({
 
         <p className="helpCopyright">© 2026 Organized Chaos. All rights reserved.</p>
 
-        <button type="button" onClick={onClose}>
-          {labels.close}
+        <button
+          type="button"
+          onClick={onClose}
+          title={closeShortcutKey ? `${labels.close} (${closeShortcutKey.toLocaleUpperCase()})` : labels.close}
+          aria-keyshortcuts={closeShortcutKey ?? undefined}
+          data-shortcut-key={closeShortcutKey ?? undefined}
+        >
+          {renderShortcutLabel(labels.close)}
         </button>
       </section>
     </div>

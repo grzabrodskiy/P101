@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 
 import {
   BASE_TILE_COUNT,
@@ -22,10 +22,12 @@ import { makePowerUp, makeTile, updateMovingEntity } from "../game/logic";
 import { rollGoalConfig } from "../game/rounds";
 import type { PowerUp, Tile } from "../game/types";
 import { useWordTray } from "../hooks/useWordTray";
+import { ACTION_ICONS } from "./actionIcons";
 import { GameField } from "./GameField";
-import { GameMenu } from "./GameMenu";
 import { GameSidePanel } from "./GameSidePanel";
+import { GameTitle } from "./GameTitle";
 import { HelpModal } from "./HelpModal";
+import { getShortcutKey, matchesShortcutKey } from "./shortcutKey";
 
 function stopEvent(event: SyntheticEvent) {
   event.preventDefault();
@@ -193,11 +195,11 @@ export function GameBoard({
   const feedbackIdRef = useRef(1);
   const powerUpRespawnAtRef = useRef(0);
   const mountedRef = useRef(false);
-  const menuAutoPausedRef = useRef(false);
   const optionsAutoPausedRef = useRef(false);
   const announcementTimeoutRef = useRef<number | null>(null);
   const roundFlipTimeoutRef = useRef<number | null>(null);
   const restartTurnTimeoutRef = useRef<number | null>(null);
+  const cornerStatContentRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const [tiles, setTiles] = useState<Tile[]>(() =>
     Array.from({ length: BASE_TILE_COUNT }, () => makeTile(idRef.current++, language, speedMultiplier))
@@ -214,10 +216,10 @@ export function GameBoard({
   const [timeLeft, setTimeLeft] = useState<number>(roundSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [helpAutoPaused, setHelpAutoPaused] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [cornerStatWidth, setCornerStatWidth] = useState<number | null>(null);
   const [roundScoreStart, setRoundScoreStart] = useState(0);
   const [feedbackBursts, setFeedbackBursts] = useState<
     Array<{ id: number; text: string; tone: "score" | "bonus" }>
@@ -236,7 +238,7 @@ export function GameBoard({
   const isFrozen = freezeLeft > 0;
   const isWallActive = wallLeft > 0;
   const isSlowActive = slowLeft > 0;
-  const isEffectivelyPaused = isPaused || isMenuOpen || isOptionsOpen || isHelpModalOpen;
+  const isEffectivelyPaused = isPaused || isOptionsOpen || isHelpModalOpen;
   const roundPaceMultiplier = 1 + (currentRound - 1) * ROUND_PACE_STEP;
   const effectivePowerUpRespawnMs = Math.max(650, Math.round(powerUpRespawnMs / roundPaceMultiplier));
 
@@ -383,7 +385,6 @@ export function GameBoard({
     setFreezeLeft(0);
     setWallLeft(0);
     setSlowLeft(0);
-    menuAutoPausedRef.current = false;
     optionsAutoPausedRef.current = false;
 
     if (resetScore) {
@@ -534,37 +535,11 @@ export function GameBoard({
   ]);
 
   useEffect(() => {
-    if (isMenuOpen) {
-      if (isRunning && !isPaused) {
-        setIsPaused(true);
-        setStatus(t.pausedStatus);
-        menuAutoPausedRef.current = true;
-      }
-      return;
-    }
-
-    if (menuAutoPausedRef.current && isRunning) {
-      if (isOptionsOpen || isHelpModalOpen) {
-        return;
-      }
-
-      setIsPaused(false);
-      setStatus(t.initialStatus);
-      menuAutoPausedRef.current = false;
-      return;
-    }
-
-    menuAutoPausedRef.current = false;
-  }, [isMenuOpen, isRunning, isPaused, isOptionsOpen, isHelpModalOpen, t.pausedStatus, t.initialStatus]);
-
-  useEffect(() => {
     if (isOptionsOpen) {
-      if (isRunning && !isPaused) {
+      if (isRunning && !isPaused && !optionsAutoPausedRef.current) {
         setIsPaused(true);
         setStatus(t.pausedStatus);
         optionsAutoPausedRef.current = true;
-      } else {
-        optionsAutoPausedRef.current = false;
       }
       return;
     }
@@ -575,6 +550,59 @@ export function GameBoard({
     }
     optionsAutoPausedRef.current = false;
   }, [isOptionsOpen, isRunning, isPaused, t.pausedStatus, t.initialStatus]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.repeat ||
+        Array.from(event.key).length !== 1
+      ) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLElement &&
+        (activeElement.isContentEditable ||
+          activeElement.matches("input, textarea, select"))
+      ) {
+        return;
+      }
+
+      const shortcutKey = getShortcutKey(event.key);
+      if (!shortcutKey) {
+        return;
+      }
+
+      const scopeSelector = isOptionsOpen || isHelpModalOpen
+        ? ".modalBackdrop button[data-shortcut-key]"
+        : ".gameShell button[data-shortcut-key]";
+
+      const targetButton = Array.from(document.querySelectorAll<HTMLButtonElement>(scopeSelector))
+        .find((button) => {
+          if (button.disabled || !matchesShortcutKey(button.dataset.shortcutKey, shortcutKey)) {
+            return false;
+          }
+
+          const { width, height } = button.getBoundingClientRect();
+          return width > 0 && height > 0;
+        });
+
+      if (!targetButton) {
+        return;
+      }
+
+      event.preventDefault();
+      targetButton.click();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isHelpModalOpen, isOptionsOpen]);
 
   useEffect(() => {
     if (!isRunning || !isRefreshing) return undefined;
@@ -599,19 +627,37 @@ export function GameBoard({
       return;
     }
 
+    if (isPaused && status === t.pausedStatus) {
+      setStatusFlash(status);
+      return;
+    }
+
     setStatusFlash(status);
     const timeout = window.setTimeout(() => {
       setStatusFlash((current) => (current === status ? null : current));
     }, 3200);
 
     return () => window.clearTimeout(timeout);
-  }, [status, t.initialStatus, isGameOver]);
+  }, [isPaused, status, t.initialStatus, t.pausedStatus, isGameOver]);
 
   useEffect(() => {
     if (!explosionPulse) return undefined;
     const timeout = setTimeout(() => setExplosionPulse(false), EXPLOSION_MS);
     return () => clearTimeout(timeout);
   }, [explosionPulse]);
+
+  useLayoutEffect(() => {
+    const nextWidth = Math.max(
+      ...cornerStatContentRefs.current.map((element) => (element ? Math.ceil(element.scrollWidth) : 0))
+    );
+
+    if (nextWidth === 0) {
+      return;
+    }
+
+    // Match the widest stat while keeping a little room for the shared padding.
+    setCornerStatWidth((current) => (current === nextWidth + 20 ? current : nextWidth + 20));
+  }, [currentRound, goalConfig.score, language, roundScore, score, timeLeft]);
 
   const activeEffects = useMemo(() => {
     const effects: string[] = [];
@@ -703,13 +749,36 @@ export function GameBoard({
     setIsRestartTurning(true);
     restartTurnTimeoutRef.current = window.setTimeout(() => {
       resetRoundState(true, 1, true);
-      setIsMenuOpen(false);
       setIsHelpModalOpen(false);
       restartTurnTimeoutRef.current = window.setTimeout(() => {
         setIsRestartTurning(false);
         restartTurnTimeoutRef.current = null;
       }, 560);
     }, 480);
+  }
+
+  function togglePause() {
+    if (!isRunning || isOptionsOpen || isHelpModalOpen || isRestartTurning) {
+      return;
+    }
+
+    setIsPaused((previous) => {
+      const next = !previous;
+      setStatus(next ? t.pausedStatus : t.initialStatus);
+      return next;
+    });
+  }
+
+  function openHelpModal() {
+    if (isRunning && !isPaused) {
+      setIsPaused(true);
+      setStatus(t.pausedStatus);
+      setHelpAutoPaused(true);
+    } else {
+      setHelpAutoPaused(false);
+    }
+
+    setIsHelpModalOpen(true);
   }
 
   function closeHelpModal() {
@@ -749,167 +818,169 @@ export function GameBoard({
 
       <section className="gameShell">
         <header className="gameHeader">
-          <GameMenu
-            isOpen={isMenuOpen}
-            onToggle={() => setIsMenuOpen((prev) => !prev)}
-            onOpenOptions={() => {
-              onOpenOptions();
-              setIsMenuOpen(false);
-            }}
-            onOpenHelp={() => {
-              if (isRunning && !isPaused) {
-                setIsPaused(true);
-                setStatus(t.pausedStatus);
-                setHelpAutoPaused(true);
-              } else {
-                setHelpAutoPaused(false);
-              }
-              setIsHelpModalOpen(true);
-              setIsMenuOpen(false);
-            }}
-            labels={{
-              menuButton: "...",
-              menuTitle: t.menuTitle,
-              options: t.options,
-              help: t.help,
-              closeMenu: t.closeMenu
-            }}
-          />
-          <h1>{t.title}</h1>
+          <GameTitle title={t.title} language={language} />
         </header>
 
-        <section className="boardShell">
-        {submittedWords.length > 0 ? (
-          <aside className="submittedWordsRail" aria-hidden="true">
-            {submittedWords
-              .slice(-8)
-              .reverse()
-              .map((entry, index) => (
-                <div key={`${entry.word}-${index}`} className="submittedWordEntry">
-                  <span>{entry.word}</span>
-                  <strong>+{entry.points}</strong>
+        <section className="playArea">
+          <GameSidePanel
+            tray={tray}
+            trayLengthBonus={trayLengthBonus}
+            trayWordMultiplier={trayWordMultiplier}
+            trayScore={trayScore}
+            isChecking={isChecking}
+            submitDisabled={!canSubmit}
+            isRunning={isRunning}
+            isPaused={isPaused}
+            isRefreshing={isRefreshing || isEffectivelyPaused}
+            activeEffects={activeEffects}
+            submittedWords={submittedWords}
+            onSubmitWord={submitWord}
+            onBackspace={removeLast}
+            onClear={clear}
+            onOpenHelp={openHelpModal}
+            onPauseToggle={togglePause}
+            onRestart={startNewGame}
+            onOpenOptions={onOpenOptions}
+            labels={{
+              trayPlaceholder: t.trayPlaceholder,
+              wordPoints: t.wordPoints,
+              bonuses: t.bonuses,
+              lengthBonus: t.lengthBonus,
+              wordMultiplier: t.wordMultiplier,
+              submitWord: language === "en" ? "Submit" : t.submitWord,
+              checking: t.checking,
+              backspace: t.backspace,
+              clear: t.clear,
+              help: t.help,
+              pause: t.pause,
+              resume: t.resume,
+              restartRound: t.newGame,
+              playAgain: t.newGame,
+              options: t.options,
+              acceptedWords: t.acceptedWords,
+              noneYet: t.noneYet,
+              effects: t.effects
+            }}
+          />
+
+          <section className="boardShell">
+            {submittedWords.length > 0 ? (
+              <aside className="submittedWordsRail" aria-hidden="true">
+                {submittedWords
+                  .slice(-8)
+                  .reverse()
+                  .map((entry, index) => (
+                    <div key={`${entry.word}-${index}`} className="submittedWordEntry">
+                      <span className="submittedWordTiles">
+                        {Array.from(entry.word.toLocaleUpperCase(language)).map((letter, letterIndex) => (
+                          <span key={`${entry.word}-${letterIndex}`} className="submittedWordTile">
+                            <span className="submittedWordLetter">{letter}</span>
+                          </span>
+                        ))}
+                      </span>
+                      <strong className="submittedWordScore">+{entry.points}</strong>
+                    </div>
+                  ))}
+              </aside>
+            ) : null}
+
+            <section
+              className={`${isGameOver ? "gameStage gameStage-gameOver" : "gameStage"}${isRoundFlipping ? " gameStage-roundFlip" : ""}${isRestartTurning ? " gameStage-restartTurn" : ""}`}
+              style={boardThemeStyle}
+            >
+              <div className="boardCard">
+                <div className="boardFace boardFace-front">
+                  <GameField
+                    tiles={tiles}
+                    powerUp={powerUp}
+                    isRunning={isRunning}
+                    isRefreshing={isRefreshing || isEffectivelyPaused}
+                    explosionPulse={explosionPulse}
+                    isFreezeActive={isFrozen}
+                    isWallActive={isWallActive}
+                    isSlowActive={isSlowActive}
+                    feedbackBursts={feedbackBursts}
+                    onCollectTile={collectTile}
+                    onActivatePowerUp={activatePowerUp}
+                    onPointerMove={() => {}}
+                    onPointerLeave={() => {}}
+                    powerUpHelpByKind={t.powerUpHelp}
+                  />
+
+                  <div className="boardOverlay" aria-hidden="true">
+                    <section className="cornerStat cornerStat-topLeft" style={{ width: cornerStatWidth ?? undefined }}>
+                      <div className="cornerStatContent" ref={(element) => { cornerStatContentRefs.current[0] = element; }}>
+                        <span className="cornerLabel">{t.round}</span>
+                        <strong className="cornerValue">{currentRound}</strong>
+                      </div>
+                    </section>
+
+                    <section className="cornerStat cornerStat-topRight" style={{ width: cornerStatWidth ?? undefined }}>
+                      <div className="cornerStatContent" ref={(element) => { cornerStatContentRefs.current[1] = element; }}>
+                        <span className="cornerLabel">{t.timeLeft}</span>
+                        <strong className="cornerValue" style={{ color: timeColor }}>{timeLeft}s</strong>
+                      </div>
+                    </section>
+
+                    <section className="cornerStat cornerStat-bottomLeft" style={{ width: cornerStatWidth ?? undefined }}>
+                      <div className="cornerStatContent" ref={(element) => { cornerStatContentRefs.current[2] = element; }}>
+                        <span className="cornerLabel">{t.roundScore}</span>
+                        <strong className="cornerValue">{roundScore}/{goalConfig.score}</strong>
+                      </div>
+                    </section>
+
+                    <section className="cornerStat cornerStat-bottomRight" style={{ width: cornerStatWidth ?? undefined }}>
+                      <div className="cornerStatContent" ref={(element) => { cornerStatContentRefs.current[3] = element; }}>
+                        <span className="cornerLabel">{t.totalScore}</span>
+                        <strong className="cornerValue">{score}</strong>
+                      </div>
+                    </section>
+                  </div>
+
+                  {!isGameOver && shouldShowMessage ? (
+                    <section
+                      key={displayStatus ?? "message"}
+                      className={`stageMessage${announcement ? " stageMessage-announce" : ""}`}
+                    >
+                      <p className="status">{displayStatus}</p>
+                    </section>
+                  ) : null}
                 </div>
-              ))}
-          </aside>
-        ) : null}
 
-        <section
-          className={`${isGameOver ? "gameStage gameStage-gameOver" : "gameStage"}${isRoundFlipping ? " gameStage-roundFlip" : ""}${isRestartTurning ? " gameStage-restartTurn" : ""}`}
-          style={boardThemeStyle}
-        >
-          <div className="boardCard">
-            <div className="boardFace boardFace-front">
-              <GameField
-                tiles={tiles}
-                powerUp={powerUp}
-                isRunning={isRunning}
-                isRefreshing={isRefreshing || isEffectivelyPaused}
-                explosionPulse={explosionPulse}
-                isFreezeActive={isFrozen}
-                isWallActive={isWallActive}
-                isSlowActive={isSlowActive}
-                feedbackBursts={feedbackBursts}
-                onCollectTile={collectTile}
-                onActivatePowerUp={activatePowerUp}
-                onPointerMove={() => {}}
-                onPointerLeave={() => {}}
-                powerUpHelpByKind={t.powerUpHelp}
-              />
-
-              <div className="boardOverlay" aria-hidden="true">
-                <section className="cornerStat cornerStat-topLeft">
-                  <span className="cornerLabel">{t.round}</span>
-                  <strong className="cornerValue">{currentRound}</strong>
-                </section>
-
-                <section className="cornerStat cornerStat-topRight">
-                  <span className="cornerLabel">{t.timeLeft}</span>
-                  <strong className="cornerValue" style={{ color: timeColor }}>{timeLeft}s</strong>
-                </section>
-
-                <section className="cornerStat cornerStat-bottomLeft">
-                  <span className="cornerLabel">{t.roundScore}</span>
-                  <strong className="cornerValue">{roundScore}/{goalConfig.score}</strong>
-                </section>
-
-                <section className="cornerStat cornerStat-bottomRight">
-                  <span className="cornerLabel">{t.totalScore}</span>
-                  <strong className="cornerValue">{score}</strong>
-                </section>
+                <div className="boardFace boardFace-back" style={backFaceThemeStyle}>
+                  <div className="backFaceTileField" aria-hidden="true">
+                    {backFaceTiles.map((tile) => (
+                      <span
+                        key={tile.id}
+                        className={`tile backFaceTile${tile.toneClass ? ` ${tile.toneClass}` : ""}`}
+                        style={{
+                          left: `${tile.left}%`,
+                          top: `${tile.top}%`,
+                          width: tileSizePercent,
+                          height: tileSizePercent
+                        }}
+                      >
+                        <span className="letter">{tile.char}</span>
+                        <span className="value">{tile.value}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="gameOverCard">
+                    <p className="gameOverEyebrow">{t.matchComplete}</p>
+                    <h2>{t.finalScore}: {score}</h2>
+                    <button
+                      type="button"
+                      onClick={startNewGame}
+                      data-shortcut-key={getShortcutKey(language === "en" ? "Start New Game" : t.newGame) ?? undefined}
+                    >
+                      {language === "en" ? "Start New Game" : t.newGame}
+                    </button>
+                  </div>
+                </div>
               </div>
-
-              {!isGameOver && shouldShowMessage ? (
-                <section
-                  key={displayStatus ?? "message"}
-                  className={`stageMessage${announcement ? " stageMessage-announce" : ""}`}
-                >
-                  <p className="status">{displayStatus}</p>
-                </section>
-              ) : null}
-            </div>
-
-            <div className="boardFace boardFace-back" style={backFaceThemeStyle}>
-              <div className="backFaceTileField" aria-hidden="true">
-                {backFaceTiles.map((tile) => (
-                  <span
-                    key={tile.id}
-                    className={`tile backFaceTile${tile.toneClass ? ` ${tile.toneClass}` : ""}`}
-                    style={{
-                      left: `${tile.left}%`,
-                      top: `${tile.top}%`,
-                      width: tileSizePercent,
-                      height: tileSizePercent
-                    }}
-                  >
-                    <span className="letter">{tile.char}</span>
-                    <span className="value">{tile.value}</span>
-                  </span>
-                ))}
-              </div>
-              <div className="gameOverCard">
-                <p className="gameOverEyebrow">{t.matchComplete}</p>
-                <h2>{t.finalScore}: {score}</h2>
-                <button type="button" onClick={startNewGame}>
-                  {language === "en" ? "Start New Game" : t.newGame}
-                </button>
-              </div>
-            </div>
-          </div>
+            </section>
+          </section>
         </section>
-        </section>
-
-        <GameSidePanel
-          tray={tray}
-          trayLengthBonus={trayLengthBonus}
-          trayWordMultiplier={trayWordMultiplier}
-          trayScore={trayScore}
-          isChecking={isChecking}
-          submitDisabled={!canSubmit}
-          isRunning={isRunning}
-          isRefreshing={isRefreshing || isEffectivelyPaused}
-          activeEffects={activeEffects}
-          submittedWords={submittedWords}
-          onSubmitWord={submitWord}
-          onBackspace={removeLast}
-          onClear={clear}
-          onRestart={startNewGame}
-          labels={{
-            trayPlaceholder: t.trayPlaceholder,
-            wordPoints: t.wordPoints,
-            bonuses: t.bonuses,
-            lengthBonus: t.lengthBonus,
-            wordMultiplier: t.wordMultiplier,
-            submitWord: language === "en" ? "Submit" : t.submitWord,
-            checking: t.checking,
-            backspace: t.backspace,
-            clear: t.clear,
-            restartRound: t.newGame,
-            playAgain: t.newGame,
-            acceptedWords: t.acceptedWords,
-            noneYet: t.noneYet,
-            effects: t.effects
-          }}
-        />
       </section>
     </>
   );

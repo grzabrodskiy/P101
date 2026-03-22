@@ -6,6 +6,23 @@ import type {
   SpeedMultiplier
 } from "../game/constants";
 import type { LanguageCode } from "../game/i18n";
+import { getShortcutKey, getShortcutLabelParts } from "./shortcutKey";
+
+function renderShortcutLabel(label: string) {
+  const parts = getShortcutLabelParts(label);
+
+  if (!parts) {
+    return label;
+  }
+
+  return (
+    <>
+      {parts.before}
+      <span className="shortcutUnderline">{parts.shortcut}</span>
+      {parts.after}
+    </>
+  );
+}
 
 type OptionsModalProps = {
   isOpen: boolean;
@@ -68,6 +85,9 @@ export function OptionsModal({
   labels
 }: OptionsModalProps) {
   if (!isOpen) return null;
+
+  const cancelShortcutKey = getShortcutKey(labels.cancel);
+  const applyShortcutKey = getShortcutKey(labels.applyAndRestart);
 
   return (
     <div className="modalBackdrop" role="presentation" onClick={onCancel}>
@@ -182,11 +202,23 @@ export function OptionsModal({
         </div>
 
         <div className="modalActions">
-          <button type="button" onClick={onCancel}>
-            {labels.cancel}
+          <button
+            type="button"
+            onClick={onCancel}
+            title={cancelShortcutKey ? `${labels.cancel} (${cancelShortcutKey.toLocaleUpperCase()})` : labels.cancel}
+            aria-keyshortcuts={cancelShortcutKey ?? undefined}
+            data-shortcut-key={cancelShortcutKey ?? undefined}
+          >
+            {renderShortcutLabel(labels.cancel)}
           </button>
-          <button type="button" onClick={onApply}>
-            {labels.applyAndRestart}
+          <button
+            type="button"
+            onClick={onApply}
+            title={applyShortcutKey ? `${labels.applyAndRestart} (${applyShortcutKey.toLocaleUpperCase()})` : labels.applyAndRestart}
+            aria-keyshortcuts={applyShortcutKey ?? undefined}
+            data-shortcut-key={applyShortcutKey ?? undefined}
+          >
+            {renderShortcutLabel(labels.applyAndRestart)}
           </button>
         </div>
       </section>
