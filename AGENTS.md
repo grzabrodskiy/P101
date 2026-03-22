@@ -2,6 +2,7 @@
 
 ## Vercel Publishing
 
+- User shorthand: when the user says `publish changes`, do both a git push to `origin/main` and a production Vercel publish.
 - Canonical production URL: `https://word-constructor.vercel.app/`
 - Treat temporary `*.vercel.app` deployment URLs as raw deploy previews unless explicitly confirming the production alias.
 - Preferred publish path: push the desired commit to `main`. This triggers [`.github/workflows/vercel-production.yml`](/Users/tatyanakudryavtseva/LocalWork/P101/.github/workflows/vercel-production.yml), which deploys production on Vercel.
