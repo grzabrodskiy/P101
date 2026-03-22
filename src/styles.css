@@ -316,6 +316,10 @@ h1 {
   cursor: default;
 }
 
+.gameStage-gameOver .backFaceTile {
+  transform: rotate(var(--backface-tilt, 0deg));
+}
+
 .boardShell {
   grid-area: board;
   position: relative;

@@ -61,6 +61,7 @@ type BackFaceTile = {
   left: number;
   top: number;
   toneClass: string;
+  tiltDegrees: number;
 };
 
 const BOARD_THEMES: BoardTheme[] = [
@@ -164,7 +165,8 @@ function makeBackFaceTiles(seed: number): BackFaceTile[] {
       value: SCRABBLE_VALUES[char as keyof typeof SCRABBLE_VALUES] ?? 1,
       left: ((padding + column * (TILE_SIZE + gapX)) / FIELD_SIZE) * 100,
       top: ((padding + row * (TILE_SIZE + gapY)) / FIELD_SIZE) * 100,
-      toneClass
+      toneClass,
+      tiltDegrees: Math.round((random() * 10 - 5) * 10) / 10
     };
   });
 }
@@ -957,8 +959,9 @@ export function GameBoard({
                           left: `${tile.left}%`,
                           top: `${tile.top}%`,
                           width: tileSizePercent,
-                          height: tileSizePercent
-                        }}
+                          height: tileSizePercent,
+                          "--backface-tilt": `${tile.tiltDegrees}deg`
+                        } as CSSProperties}
                       >
                         <span className="letter">{tile.char}</span>
                         <span className="value">{tile.value}</span>
